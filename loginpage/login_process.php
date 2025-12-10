@@ -38,7 +38,7 @@ $_SESSION['role'] = $user['role'];
 $_SESSION['user_name'] = $user['display_name'];
 
 if(in_array($user['role'], ['platform_admin','store_owner','staff'])){
-    header("Location: ../adminpage/Dashboard.php");
+    header("Location: ../adminpage/sidebar/sidebar.php");
 } else {
     header("Location: ../userspage/home.php");
 }

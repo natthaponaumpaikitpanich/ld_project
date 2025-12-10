@@ -55,5 +55,5 @@ $result = mysqli_query($conn, $sql);
     </div>
     <div class="container mt-4">
 <div class="d-flex">
-    <a href="../sidebar/sidebar.php" class="btn btn-danger ms-auto">กลับไปหน้าแรก</a>
+    <a href="../sidebar/sidebar.php?link=Dashboard" class="btn btn-danger ms-auto">กลับไปหน้าแรก</a>
 </div>

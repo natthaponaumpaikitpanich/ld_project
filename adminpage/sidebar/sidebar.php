@@ -1,10 +1,10 @@
 <style>
 /* --- Sidebar Layout --- */
-.sidebar {
+body .sidebar {
     width: 260px;
     height: 100vh;
     position: fixed;
-    background: #000000ff; /* เทาเข้ม */
+    background: #14253fff;/* เทาเข้ม */
     color: white;
     transition: 0.3s;
     overflow: hidden;
@@ -20,7 +20,7 @@
     font-size: 20px;
     font-weight: bold;
     text-align: center;
-    border-bottom: 1px solid #374151;
+    border-bottom: 1px solid #FFFFFF ;
 }
 
 /* Menu */
@@ -36,7 +36,8 @@
 
 .sidebar a:hover {
     background: #111827;
-    color: #fff;
+    color: #FFFFFF ;
+
 }
 
 .sidebar.collapsed a span {
@@ -54,7 +55,7 @@
     right: -15px;
     width: 30px;
     height: 30px;
-    background: #1f2937;
+    background: #1f2937;    
     color: white;
     border-radius: 50%;
     border: 2px solid white;
@@ -85,19 +86,19 @@ include_once '../body.php';
     <a href="sidebar.php?link=create"><i class="bi bi-plus-circle"></i> <span>สมัครร้านค้าใหม่</span></a>
 
     <!-- BILLING -->
-    <hr style="border-color:#374151;">
-    <a href="billing/plan.php"><i class="bi bi-gear"></i> <span>ตั้งค่าคิดเงินรายเดือน</span></a>
+    <hr style="border-color:#FFFFFF ;">
+    <a href="sidebar.php?link=setting"><i class="bi bi-gear"></i> <span>ตั้งค่าคิดเงินรายเดือน</span></a>
     <a href="billing/payments.php"><i class="bi bi-wallet2"></i> <span>ดูการชำระเงินทั้งหมด</span></a>
     <a href="billing/overdue.php"><i class="bi bi-exclamation-triangle"></i> <span>ร้านค้าที่ค้างจ่าย</span></a>
 
     <!-- SYSTEM -->
-    <hr style="border-color:#374151;">
+    <hr style="border-color:#FFFFFF ;">
     <a href="system/stats.php"><i class="bi bi-bar-chart"></i> <span>สถิติรวมทั้งระบบ</span></a>
     <a href="system/transactions.php"><i class="bi bi-reception-4"></i> <span>รายงานธุรกรรม</span></a>
     <a href="system/daily.php"><i class="bi bi-calendar-event"></i> <span>การใช้งานระบบรายวัน</span></a>
 
     <!-- LOGOUT -->
-    <hr style="border-color:#374151;">
+    <hr style="border-color:#FFFFFF ;">
     <a href="../logout.php"><i class="bi bi-box-arrow-left"></i> <span>ออกจากระบบ</span></a>
 
 </div>

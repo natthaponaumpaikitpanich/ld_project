@@ -12,7 +12,7 @@ $ready = $conn->query("SELECT COUNT(*) AS num FROM orders WHERE status='ready'")
 $revenue = $conn->query("SELECT IFNULL(SUM(amount),0) AS total FROM payments WHERE DATE(paid_at)=CURDATE() AND status='success'")
                  ->fetch_assoc()['total'];
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../loginpage/login.php");
+    header("Location: ../../loginpage/login.php");
     exit;
 }
 $allow = ['platform_admin','store_owner','staff'];

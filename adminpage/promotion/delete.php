@@ -14,7 +14,7 @@ $stmt = $pdo->prepare($sql);
 
 if ($stmt->execute([':id' => $promo_id])) {
     // ลบสำเร็จ -> กลับหน้า index
-    header("Location: index.php?msg=deleted");
+    header("Location: index.php");
     exit();
 } else {
     echo "Error: Unable to delete promotion.";

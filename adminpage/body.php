@@ -26,6 +26,11 @@ if($link=='home'){
 }elseif($link=='create'){
     include_once "stores/create.php";
 }
+if($link=='home'){
+
+}elseif($link=='setting'){
+    include_once "billing/plan.php";
+}
 
 
 ?>
