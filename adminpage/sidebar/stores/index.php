@@ -1,7 +1,7 @@
 <?php
 // ดึงแพ็กเกจ (เอาไว้ใช้ที่อื่นได้ ไม่กระทบ)
 $plans = $pdo->query("SELECT * FROM billing_plans WHERE status='active'")
-             ->fetchAll(PDO::FETCH_ASSOC);
+    ->fetchAll(PDO::FETCH_ASSOC);
 
 // ✅ QUERY หลัก (แทน SELECT * FROM stores)
 $sql = "
@@ -20,84 +20,86 @@ $stores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <title>ร้านซักอบรีดทั้งหมด</title>
 </head>
-    
+
 <body style="margin-left:260px;">
 
-<div class="container mt-4">
+    <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>ร้านซักอบรีดทั้งหมด</h3>
-        
-    </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>ร้านซักอบรีดทั้งหมด</h3>
 
-    <div class="card shadow">
-        <div class="card-body">
+        </div>
 
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ชื่อร้าน</th>
-                        <th>เบอร์โทร</th>
-                        <th>ที่อยู่</th>
-                        <th>วันที่สมัคร</th>
-                        <th>สถานะ</th>
-                        <th>แพ็คเกจที่สมัคร</th>
-                        <th width="180">จัดการ</th>
-                    </tr>
-                </thead>
+        <div class="card shadow">
+            <div class="card-body">
 
-                <tbody>
-<?php foreach ($stores as $s): ?>
-<tr>
-    <td><?= htmlspecialchars($s['name']) ?></td>
-    <td><?= htmlspecialchars($s['phone']) ?></td>
-    <td><?= nl2br(htmlspecialchars($s['address'])) ?></td>
-    <td><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ชื่อร้าน</th>
+                            <th>เบอร์โทร</th>
+                            <th>ที่อยู่</th>
+                            <th>วันที่สมัคร</th>
+                            <th>สถานะ</th>
+                            <th>แพ็คเกจที่สมัคร</th>
+                            <th width="180">จัดการ</th>
+                        </tr>
+                    </thead>
 
-    <td>
-        <?php if ($s['status'] === 'active'): ?>
-            <span class="badge bg-success">Active</span>
-        <?php elseif ($s['status'] === 'pending'): ?>
-            <span class="badge bg-warning">Pending</span>
-        <?php endif; ?>
-    </td>
+                    <tbody>
+                        <?php foreach ($stores as $s): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($s['name']) ?></td>
+                                <td><?= htmlspecialchars($s['phone']) ?></td>
+                                <td><?= nl2br(htmlspecialchars($s['address'])) ?></td>
+                                <td><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
 
-    <!-- ✅ แพ็กเกจ -->
-    <td>
-        <?php if ($s['plan_name']): ?>
-            <span class="badge bg-primary">
-                <?= htmlspecialchars($s['plan_name']) ?>
-            </span><br>
-            <small class="text-muted">
-                <?= number_format($s['plan_price'], 2) ?> ฿ / เดือน
-            </small>
-        <?php else: ?>
-            <span class="badge bg-secondary">ไม่เลือกแพ็กเกจ</span>
-        <?php endif; ?>
-    </td>
+                                <td>
+                                    <?php if ($s['status'] === 'active'): ?>
+                                        <span class="badge bg-success">Active</span>
+                                    <?php elseif ($s['status'] === 'pending'): ?>
+                                        <span class="badge bg-warning">Pending</span>
+                                    <?php endif; ?>
+                                </td>
 
-    <td>
-        <a href="stores/edit.php?id=<?= $s['id'] ?>" class="btn btn-warning btn-sm">แก้ไข</a>
+                                <!-- ✅ แพ็กเกจ -->
+                                <td>
+                                    <?php if ($s['plan_name']): ?>
+                                        <span class="badge bg-primary">
+                                            <?= htmlspecialchars($s['plan_name']) ?>
+                                        </span><br>
+                                        <small class="text-muted">
+                                            <?= number_format($s['plan_price'], 2) ?> ฿ / เดือน
+                                        </small>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">ไม่เลือกแพ็กเกจ</span>
+                                    <?php endif; ?>
+                                </td>
 
-        <a href="stores/delete.php?id=<?= $s['id'] ?>"
-           class="btn btn-danger btn-sm"
-           onclick="return confirm('⚠️ ลบร้านนี้ถาวร ต้องการลบหรือไม่?')">
-           ลบ
-        </a>
-    </td>
-</tr>
-<?php endforeach; ?>
-</tbody>
+                                <td>
+                                    <a href="stores/edit.php?id=<?= $s['id'] ?>" class="btn btn-warning btn-sm">แก้ไข</a>
+
+                                    <a href="stores/delete.php?id=<?= $s['id'] ?>"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('⚠️ ลบร้านนี้ถาวร ต้องการลบหรือไม่?')">
+                                        ลบ
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
 
 
-            </table>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
 </body>
+
 </html>

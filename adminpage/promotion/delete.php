@@ -19,4 +19,3 @@ if ($stmt->execute([':id' => $promo_id])) {
 } else {
     echo "Error: Unable to delete promotion.";
 }
-?>

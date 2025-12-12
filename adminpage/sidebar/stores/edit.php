@@ -1,14 +1,15 @@
 <?php
 include_once '../../index.php';
 
+
 $id = $_GET['id'] ?? null;
-if(!$id) exit;
+if (!$id) exit;
 
 $stmt = $pdo->prepare("SELECT * FROM stores WHERE id=?");
 $stmt->execute([$id]);
 $store = $stmt->fetch();
 
-if($_SERVER['REQUEST_METHOD']=='POST'){
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sql = $pdo->prepare("
         UPDATE stores SET 
         name=?, phone=?, address=?, status=? 
@@ -35,9 +36,9 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
     <textarea class="form-control mb-2" name="address"><?= $store['address'] ?></textarea>
 
     <select name="status" class="form-select mb-3">
-        <option value="active" <?= $store['status']=='active'?'selected':'' ?>>Active</option>
-        <option value="pending" <?= $store['status']=='pending'?'selected':'' ?>>Pending</option>
-        <option value="disabled" <?= $store['status']=='disabled'?'selected':'' ?>>Disabled</option>
+        <option value="active" <?= $store['status'] == 'active' ? 'selected' : '' ?>>Active</option>
+        <option value="pending" <?= $store['status'] == 'pending' ? 'selected' : '' ?>>Pending</option>
+        <option value="disabled" <?= $store['status'] == 'disabled' ? 'selected' : '' ?>>Disabled</option>
     </select>
 
     <button class="btn btn-success">บันทึก</button>

@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $updateSql = "UPDATE promotions 
                   SET title=?, discount=?, start_date=?, end_date=?, image=?, status=? 
                   WHERE id=?";
-        
+
     $stmt = $pdo->prepare($updateSql);
     $stmt->execute([$title, $discount, $start_date, $end_date, $image, $status, $id]);
 
@@ -59,6 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <title>แก้ไขโปรโมชั่น</title>
@@ -67,67 +68,68 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body class="bg-light">
 
-<div class="container mt-5">
-    <div class="card shadow-sm p-4">
-        <h3 class="mb-4">✏️ แก้ไขโปรโมชั่น</h3>
+    <div class="container mt-5">
+        <div class="card shadow-sm p-4">
+            <h3 class="mb-4">✏️ แก้ไขโปรโมชั่น</h3>
 
-        <form action="" method="POST" enctype="multipart/form-data">
+            <form action="" method="POST" enctype="multipart/form-data">
 
-            <!-- ชื่อโปรโมชั่น -->
-            <div class="mb-3">
-                <label class="form-label">ชื่อโปรโมชั่น</label>
-                <input type="text" name="title" class="form-control" value="<?= $promotion['title'] ?>" required>
-            </div>
+                <!-- ชื่อโปรโมชั่น -->
+                <div class="mb-3">
+                    <label class="form-label">ชื่อโปรโมชั่น</label>
+                    <input type="text" name="title" class="form-control" value="<?= $promotion['title'] ?>" required>
+                </div>
 
-            <!-- ส่วนลด -->
-            <div class="mb-3">
-                <label class="form-label">ส่วนลด (%)</label>
-                <input type="number" name="discount" class="form-control" value="<?= $promotion['discount'] ?>" required>
-            </div>
+                <!-- ส่วนลด -->
+                <div class="mb-3">
+                    <label class="form-label">ส่วนลด (%)</label>
+                    <input type="number" name="discount" class="form-control" value="<?= $promotion['discount'] ?>" required>
+                </div>
 
-            <!-- วันที่เริ่ม -->
-            <div class="mb-3">
-                <label class="form-label">วันที่เริ่ม</label>
-                <input type="datetime-local" name="start_date" class="form-control"
-                       value="<?= $promotion['start_date'] ? date('Y-m-d\TH:i', strtotime($promotion['start_date'])) : '' ?>"
-            </div>
+                <!-- วันที่เริ่ม -->
+                <div class="mb-3">
+                    <label class="form-label">วันที่เริ่ม</label>
+                    <input type="datetime-local" name="start_date" class="form-control"
+                        value="<?= $promotion['start_date'] ? date('Y-m-d\TH:i', strtotime($promotion['start_date'])) : '' ?>"
+                        </div>
 
-            <!-- วันที่สิ้นสุด -->
-            <div class="mb-3">
-                <label class="form-label">วันที่สิ้นสุด</label>
-                <input type="datetime-local" name="end_date" class="form-control"
-                       value="<?= $promotion['end_date'] ? date('Y-m-d\TH:i', strtotime($promotion['end_date'])) : '' ?>"
-required>
-            </div>
+                    <!-- วันที่สิ้นสุด -->
+                    <div class="mb-3">
+                        <label class="form-label">วันที่สิ้นสุด</label>
+                        <input type="datetime-local" name="end_date" class="form-control"
+                            value="<?= $promotion['end_date'] ? date('Y-m-d\TH:i', strtotime($promotion['end_date'])) : '' ?>"
+                            required>
+                    </div>
 
-            <!-- รูปภาพเดิม -->
-            <div class="mb-3">
-                <label class="form-label">รูปภาพเดิม</label><br>
-                <img src="uploads/<?= $promotion['image'] ?>" width="200" class="rounded border">
-            </div>
+                    <!-- รูปภาพเดิม -->
+                    <div class="mb-3">
+                        <label class="form-label">รูปภาพเดิม</label><br>
+                        <img src="uploads/<?= $promotion['image'] ?>" width="200" class="rounded border">
+                    </div>
 
-            <!-- อัปโหลดรูปใหม่ -->
-            <div class="mb-3">
-                <label class="form-label">อัปโหลดรูปใหม่ (ถ้าต้องการ)</label>
-                <input type="file" name="image" class="form-control">
-            </div>
+                    <!-- อัปโหลดรูปใหม่ -->
+                    <div class="mb-3">
+                        <label class="form-label">อัปโหลดรูปใหม่ (ถ้าต้องการ)</label>
+                        <input type="file" name="image" class="form-control">
+                    </div>
 
-            <!-- สถานะ -->
-            <div class="mb-3">
-                <label class="form-label">สถานะ</label>
-                <select name="status" class="form-select">
-                    <option value="active" <?= $promotion['status'] === 'active' ? 'selected' : '' ?>>Active</option>
-                    <option value="draft" <?= $promotion['status'] === 'draft' ? 'selected' : '' ?>>Draft</option>
-                </select>
-            </div>
+                    <!-- สถานะ -->
+                    <div class="mb-3">
+                        <label class="form-label">สถานะ</label>
+                        <select name="status" class="form-select">
+                            <option value="active" <?= $promotion['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                            <option value="draft" <?= $promotion['status'] === 'draft' ? 'selected' : '' ?>>Draft</option>
+                        </select>
+                    </div>
 
-            <!-- ปุ่มบันทึก -->
-            <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
-            <a href="index.php" class="btn btn-secondary">กลับ</a>
+                    <!-- ปุ่มบันทึก -->
+                    <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+                    <a href="index.php" class="btn btn-secondary">กลับ</a>
 
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
 </body>
+
 </html>

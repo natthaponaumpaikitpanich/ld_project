@@ -2,7 +2,7 @@
 include_once '../../index.php';
 
 $id = $_GET['id'] ?? null;
-if(!$id){
+if (!$id) {
     header("Location: index.php");
     exit;
 }
@@ -31,8 +31,7 @@ try {
         ->execute([$id]);
 
     $pdo->commit();
-
-} catch(Exception $e){
+} catch (Exception $e) {
     $pdo->rollBack();
 }
 

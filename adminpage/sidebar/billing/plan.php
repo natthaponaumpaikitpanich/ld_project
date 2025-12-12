@@ -1,6 +1,5 @@
 <?php
 
-// ดึงร้านค้าทั้งหมด
 $stmt = $pdo->query("SELECT * FROM billing_plans ORDER BY price ASC");
 $plans = $stmt->fetchAll();
 
@@ -45,6 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 ?>
+<?php if (isset($_GET['error']) && $_GET['error'] == 'used'): ?>
+    <div class="alert alert-danger">ไม่สามารถลบแพ็กเกจ เพราะมีร้านค้าที่กำลังใช้งานแพ็กเกจนี้อยู่</div>
+<?php endif; ?>
 <div class="container mt-4">
     <h3 class="fw-bold">💳 แพ็กเกจรายเดือน</h3>
 
@@ -59,23 +61,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <th>ราคา/เดือน</th>
                 <th>สถานะ</th>
                 <th>จัดการ</th>
+
             </tr>
         </thead>
         <tbody>
-        <?php foreach($plans as $p): ?>
-            <tr>
-                <td><?= $p['name'] ?></td>
-                <td><?= number_format($p['price'],2) ?> ฿</td>
-                <td>
-                    <span class="badge bg-<?= $p['status']=='active'?'success':'secondary' ?>">
-                        <?= $p['status'] ?>
-                    </span>
-                </td>
-                <td>
-                    <a href="plan_edit.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-warning">แก้ไข</a>
-                </td>
-            </tr>
-        <?php endforeach ?>
+
+            <body>
+
+
+
+                <?php foreach ($plans as $p): ?>
+                    <tr>
+                        <td><?= $p['name'] ?></td>
+                        <td><?= number_format($p['price'], 2) ?> ฿</td>
+                        <td>
+                            <span class="badge bg-<?= $p['status'] == 'active' ? 'success' : 'secondary' ?>">
+                                <?= $p['status'] ?>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="billing/plan_edit.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-warning">แก้ไข</a>
+                            <a href="billing/plan_delete.php?id=<?= $p['id'] ?>"
+                                class="btn btn-danger btn-sm"
+                                onclick="return confirm('ต้องการลบแพ็กเกจนี้จริงหรือไม่?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+
+                        </td>
+
+
+
+                    </tr>
+                <?php endforeach ?>
         </tbody>
     </table>
 </div>

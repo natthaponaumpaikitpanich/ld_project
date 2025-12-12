@@ -1,6 +1,9 @@
 <?php
 include_once "../../index.php";
 ?>
+<div class="container mt-4">
+    <h3 class="fw-bold">💳 แพ็กเกจรายเดือน</h3>
+</div>
 <form method="post">
     <div class="mb-3">
         <label>ชื่อแพ็กเกจ</label>
@@ -14,21 +17,21 @@ include_once "../../index.php";
 
     <div class="mb-3">
         <label>รายละเอียด</label>
-        <textarea name="description" class="form-control"></textarea>
+        <textarea name="duration" class="form-control"></textarea>
     </div>
 
     <button class="btn btn-success">บันทึก</button>
 </form>
 <?php
-if($_POST){
+if ($_POST) {
     $stmt = $pdo->prepare("
-        INSERT INTO billing_plans (name,price,description)
+        INSERT INTO billing_plans (name,price,duration)
         VALUES (?,?,?)
     ");
     $stmt->execute([
         $_POST['name'],
         $_POST['price'],
-        $_POST['description']
+        $_POST['duration']
     ]);
     header("Location: ../sidebar.php?link=setting");
 }

@@ -1,11 +1,11 @@
 <?php
 
 $total_stores = $conn->query("SELECT COUNT(*) AS num FROM stores")
-                     ->fetch_assoc()['num'];
+    ->fetch_assoc()['num'];
 
 // ร้านที่ Active
 $active_stores = $conn->query("SELECT COUNT(*) AS num FROM stores WHERE status='active'")
-                      ->fetch_assoc()['num'];
+    ->fetch_assoc()['num'];
 
 // ร้านค้างจ่าย (subscription ไม่ active)
 $overdue_stores = $conn->query("
@@ -37,7 +37,7 @@ $overdue_list = $conn->query("
 ?>
 <?php
 
-    ?>
+?>
 <div class="container mt-4">
 
     <h2 class="mb-4 fw-bold">Dashboard ผู้ดูแลระบบ (Platform Admin)</h2>
@@ -69,7 +69,7 @@ $overdue_list = $conn->query("
         <div class="col-md-3">
             <div class="card text-bg-dark p-3">
                 <h5>รายได้เดือนนี้</h5>
-                <h2><?= number_format($monthly_revenue,2) ?> ฿</h2>
+                <h2><?= number_format($monthly_revenue, 2) ?> ฿</h2>
             </div>
         </div>
 
@@ -103,14 +103,14 @@ $overdue_list = $conn->query("
                 </tr>
             </thead>
             <tbody>
-            <?php while($row = $overdue_list->fetch_assoc()) { ?>
-                <tr>
-                    <td><?= $row['store_name'] ?></td>
-                    <td><?= $row['plan'] ?></td>
-                    <td><?= number_format($row['monthly_fee'],2) ?> ฿</td>
-                    <td><?= date('d/m/Y', strtotime($row['start_date'])) ?></td>
-                </tr>
-            <?php } ?>
+                <?php while ($row = $overdue_list->fetch_assoc()) { ?>
+                    <tr>
+                        <td><?= $row['store_name'] ?></td>
+                        <td><?= $row['plan'] ?></td>
+                        <td><?= number_format($row['monthly_fee'], 2) ?> ฿</td>
+                        <td><?= date('d/m/Y', strtotime($row['start_date'])) ?></td>
+                    </tr>
+                <?php } ?>
             </tbody>
         </table>
 
@@ -122,16 +122,16 @@ $overdue_list = $conn->query("
         <ul>
             <li>ร้านที่เปิดใช้งานอยู่: <b><?= $active_stores ?></b> ร้าน</li>
             <li>ร้านที่ค้างชำระ: <b><?= $overdue_stores ?></b> ร้าน</li>
-            <li>รายได้รวมเดือนนี้: <b><?= number_format($monthly_revenue,2) ?> ฿</b></li>
+            <li>รายได้รวมเดือนนี้: <b><?= number_format($monthly_revenue, 2) ?> ฿</b></li>
         </ul>
     </div>
 </div>
 
 </div>
 
-                </tbody>
-            </table>
+</tbody>
+</table>
 
-        </div>
-    </div>
+</div>
+</div>
 </div>
