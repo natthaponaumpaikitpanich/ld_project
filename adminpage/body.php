@@ -31,6 +31,20 @@ if($link=='home'){
 }elseif($link=='setting'){
     include_once "billing/plan.php";
 }
+if($link=='home'){
+
+}elseif($link=='payments'){
+    include_once "billing/payments.php";
+}
+elseif($link=='overdue'){
+    include_once "billing/overdue.php";
+}
+elseif($link=='transactions'){
+    include_once "system/transactions.php";
+}
+elseif($link==''){
+    include_once "system/.php";
+}
 
 
 ?>

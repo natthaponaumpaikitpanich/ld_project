@@ -13,7 +13,7 @@ $check->execute([$id]);
 $inUse = $check->fetchColumn();
 
 if ($inUse > 0) {
-    header("Location:../sidebar.php?link=setting");
+    header("Location:../sidebar.php?link=setting&error=used");
     exit;
 }
 

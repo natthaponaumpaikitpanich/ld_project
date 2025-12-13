@@ -1,12 +1,21 @@
 <?php
 require_once "../../ld_db.php";
-include "../index.php";
+
 
 // ดึงรายการโปรโมชั่นทั้งหมด
 $sql = "SELECT * FROM promotions ORDER BY created_at DESC";
 $result = mysqli_query($conn, $sql);
 ?>
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="../../image/3.jpg">
+    </link>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../bootstrap/bootstrap-icons.css" rel="stylesheet">
 
+    
+</head>
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center">
@@ -55,5 +64,5 @@ $result = mysqli_query($conn, $sql);
 </div>
 <div class="container mt-4">
     <div class="d-flex">
-        <a href="../sidebar/sidebar.php?link=Dashboard" class="btn btn-danger ms-auto">กลับไปหน้าแรก</a>
+        <a href="../sidebar/sidebar.php?link=Dashboard" class="btn btn-primary ms-auto">กลับไปหน้าแรก</a>
     </div>

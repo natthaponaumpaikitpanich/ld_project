@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </a>
 
     <table class="table table-bordered">
-        <thead class="table-dark">
+        <thead class="table light">
             <tr>
                 <th>ชื่อแพ็กเกจ</th>
                 <th>ราคา/เดือน</th>
@@ -71,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
                 <?php foreach ($plans as $p): ?>
+
                     <tr>
                         <td><?= $p['name'] ?></td>
                         <td><?= number_format($p['price'], 2) ?> ฿</td>
@@ -85,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 class="btn btn-danger btn-sm"
                                 onclick="return confirm('ต้องการลบแพ็กเกจนี้จริงหรือไม่?')">
                                 <i class="bi bi-trash"></i>
+                                
                             </a>
 
                         </td>

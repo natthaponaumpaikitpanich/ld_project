@@ -1,4 +1,5 @@
 <?php
+include_once '../../index.php';
 // ================== FUNCTION ==================
 function uuid_v4()
 {
@@ -89,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <title>สมัครร้านใหม่</title>
-    <link href="../../bootstrap-5.3.3-dist/css/bootstrap.min.css" rel="stylesheet">
+   
 </head>
 
 <body style="margin-left:260px;">

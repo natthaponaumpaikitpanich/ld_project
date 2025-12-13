@@ -1,6 +1,5 @@
 <?php
-require_once '../../../ld_db.php'; // เรียก DB ตามโปรเจคจริง
-include_once "../../index.php";
+include_once '../../assets/style.php';
 // ตรวจสอบว่ามี id ส่งมารึยัง
 if (!isset($_GET['id'])) {
     die("ไม่พบแพ็กเกจที่ต้องการแก้ไข");
@@ -37,8 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="th">
+
 
 <head>
     <meta charset="UTF-8">
@@ -93,6 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-</body>
+    </body>
 
 </html>

@@ -1,7 +1,9 @@
 <?php
-include_once "../../index.php";
+include_once '../../assets/style.php';
 ?>
-<div class="container mt-4">
+<body style="margin-left:260px;">
+    <div class="container mt-6">
+<div class="container mt-5">
     <h3 class="fw-bold">💳 แพ็กเกจรายเดือน</h3>
 </div>
 <form method="post">
@@ -22,6 +24,7 @@ include_once "../../index.php";
 
     <button class="btn btn-success">บันทึก</button>
 </form>
+</body>
 <?php
 if ($_POST) {
     $stmt = $pdo->prepare("

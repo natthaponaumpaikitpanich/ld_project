@@ -6,8 +6,8 @@
     <link rel="icon" href="../../image/3.jpg">
     </link>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../bootstrap/bootstrap-icons.css" rel="stylesheet">
 
     <title>ซักอบรีด</title>
 </head>
@@ -105,13 +105,13 @@ include_once '../body.php';
     <!-- BILLING -->
     <hr style="border-color:#FFFFFF ;">
     <a href="sidebar.php?link=setting"><i class="bi bi-gear"></i> <span>ตั้งค่าคิดเงินรายเดือน</span></a>
-    <a href="billing/payments.php"><i class="bi bi-wallet2"></i> <span>ดูการชำระเงินทั้งหมด</span></a>
-    <a href="billing/overdue.php"><i class="bi bi-exclamation-triangle"></i> <span>ร้านค้าที่ค้างจ่าย</span></a>
+    <a href="sidebar.php?link=payments"><i class="bi bi-wallet2"></i> <span>ดูการชำระเงินทั้งหมด</span></a>
+    <a href="sidebar.php?link=overdue"><i class="bi bi-exclamation-triangle"></i> <span>ร้านค้าที่ค้างจ่าย</span></a>
 
     <!-- SYSTEM -->
     <hr style="border-color:#FFFFFF ;">
-    <a href="system/stats.php"><i class="bi bi-bar-chart"></i> <span>สถิติรวมทั้งระบบ</span></a>
-    <a href="system/transactions.php"><i class="bi bi-reception-4"></i> <span>รายงานธุรกรรม</span></a>
+    <a href="sidebar.php?link=transactions"><i class="bi bi-bar-chart"></i> <span>รายงานธุรกรรม</span></a>
+    <a href="sidebar.php?link="><i class="bi bi-reception-4"></i> <span>สถิติรวมทั้งระบบ</span></a>
     <a href="system/daily.php"><i class="bi bi-calendar-event"></i> <span>การใช้งานระบบรายวัน</span></a>
 
     <!-- LOGOUT -->
@@ -127,4 +127,3 @@ include_once '../body.php';
 </script>
 
 <!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
