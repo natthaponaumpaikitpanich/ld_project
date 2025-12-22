@@ -1,5 +1,5 @@
 <?php
-include_once '../../index.php';
+include_once '../../assets/style.php';
 
 $id = $_GET['id'] ?? null;
 if (!$id) {

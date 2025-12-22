@@ -1,15 +1,18 @@
 <?php
-include '../../ld_db.php'; // เรียกฐานข้อมูล
 
+include_once '../assets/style.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    // ===== สร้าง UUID =====
+    $id = bin2hex(random_bytes(16)); // 32 chars (พอสำหรับ CHAR(35))
 
     $title = $_POST['title'];
     $discount = $_POST['discount'];
     $start_date = $_POST['start_date'];
     $end_date = $_POST['end_date'];
 
-    // ------- อัปโหลดรูป -------
-    $image = "";
+    // ===== Upload รูป =====
+    $image = null;
     if (!empty($_FILES['image']['name'])) {
 
         $targetDir = "uploads/";
@@ -21,22 +24,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $targetFilePath = $targetDir . $fileName;
 
         move_uploaded_file($_FILES["image"]["tmp_name"], $targetFilePath);
-
         $image = $fileName;
     }
 
-    // ------- INSERT ข้อมูลลงฐาน -------
+    // ===== INSERT =====
     $sql = $pdo->prepare("
-        INSERT INTO promotions (title, discount, image, start_date, end_date)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO promotions
+        (id, title, discount, image, start_date, end_date)
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
 
-    $sql->execute([$title, $discount, $image, $start_date, $end_date]);
+    $sql->execute([
+        $id,
+        $title,
+        $discount,
+        $image,
+        $start_date,
+        $end_date
+    ]);
 
     echo "<script>
-            alert('เพิ่มโปรโมชั่นสำเร็จ!');
-            window.location='index.php';
-          </script>";
+        alert('เพิ่มโปรโมชั่นสำเร็จ!');
+        window.location='index.php';
+    </script>";
 }
 ?>
 
@@ -45,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <head>
     <title>เพิ่มโปรโมชั่นใหม่</title>
-    <link rel="stylesheet" href="../../bootstrap-5.3.3-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
 </head>
 
 <body class="bg-light">

@@ -24,7 +24,7 @@ if($link=='home'){
 if($link=='home'){
 
 }elseif($link=='create'){
-    include_once "stores/create.php";
+    include_once "sidebar/stores/create.php";
 }
 if($link=='home'){
 
@@ -42,8 +42,8 @@ elseif($link=='overdue'){
 elseif($link=='transactions'){
     include_once "system/transactions.php";
 }
-elseif($link==''){
-    include_once "system/.php";
+elseif($link=='reports'){
+    include_once "system/store_report.php";
 }
 
 

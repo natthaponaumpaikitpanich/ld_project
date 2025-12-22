@@ -1,47 +1,83 @@
 <?php
 session_start();
-require_once "../ld_db.php";
+require_once "../ld_db.php"; // ต้องเป็น mysqli ($conn)
 
-$email = $_POST['email'];
-$password = $_POST['password'];
-$phone = $_POST['phone'];
+$email    = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
+$phone    = $_POST['phone'] ?? '';
 
-$sql = "SELECT * FROM users 
-        WHERE email = '$email' 
-        AND phone = '$phone'
+// --------------------
+// 1) หา user
+// --------------------
+$sql = "SELECT id, email, phone, password_hash, display_name, role 
+        FROM users 
+        WHERE email = ? AND phone = ?
         LIMIT 1";
 
-$query = mysqli_query($conn, $sql);
-$user = mysqli_fetch_assoc($query);
-
-$sql = "SELECT id, email, phone, password_hash, display_name, role FROM users WHERE email = ? AND phone = ? LIMIT 1";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ss", $email, $phone);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
-if(!$user){
-    $_SESSION['error'] = "Email หรือ เบอร์โทร ไม่ถูกต้อง";
+
+if (!$user) {
+    $_SESSION['error'] = "Email หรือเบอร์โทรไม่ถูกต้อง";
     header("Location: login.php");
     exit;
 }
 
-// แบบไม่ใช้ password_hash เพราะคุณยังไม่ได้ hash
-if($password !== $user['password_hash']){
+// --------------------
+// 2) ตรวจรหัสผ่าน
+// (ตอนนี้ยังไม่ hash ตามที่คุณบอก)
+// --------------------
+if ($password !== $user['password_hash']) {
     $_SESSION['error'] = "รหัสผ่านไม่ถูกต้อง";
     header("Location: login.php");
     exit;
 }
 
-$_SESSION['user_id'] = $user['id'];
-$_SESSION['role'] = $user['role'];
+// --------------------
+// 3) Set session พื้นฐาน
+// --------------------
+$_SESSION['user_id']   = $user['id'];
+$_SESSION['role']      = $user['role'];
 $_SESSION['user_name'] = $user['display_name'];
 
-if(in_array($user['role'], ['platform_admin','store_owner','staff'])){
-    header("Location: ../adminpage/sidebar/sidebar.php?link=Dashboard");
-} else {
-    header("Location: ../userspage/home.php");
-}
+// --------------------
+// 4) แยกตาม role
+// --------------------
+if ($user['role'] === 'platform_admin') {
 
-exit;
-?>
+    header("Location: ../adminpage/sidebar/sidebar.php?link=Dashboard");
+    exit;
+
+} elseif ($user['role'] === 'store_owner') {
+
+    // 🔑 ดึงร้านของเจ้าของร้าน
+    $sql = "SELECT id, name 
+            FROM stores 
+            WHERE owner_id = ? 
+            LIMIT 1";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $user['id']);
+    $stmt->execute();
+    $store = $stmt->get_result()->fetch_assoc();
+
+    if (!$store) {
+        $_SESSION['error'] = "ไม่พบข้อมูลร้าน";
+        header("Location: login.php");
+        exit;
+    }
+
+    // ⭐ สำคัญมาก
+    $_SESSION['store_id']   = $store['id'];
+    $_SESSION['store_name'] = $store['name'];
+
+    header("Location: ../storepage/index.php");
+    exit;
+
+} else {
+
+    header("Location: ../userspage/users.php");
+    exit;} ?>

@@ -1,5 +1,5 @@
 <?php
-include_once '../../index.php';
+include_once '../../adminpage/assets/style.php';
 // ================== FUNCTION ==================
 function uuid_v4()
 {
@@ -86,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!doctype html>
 <html lang="th">
-
 <head>
     <meta charset="utf-8">
     <title>สมัครร้านใหม่</title>

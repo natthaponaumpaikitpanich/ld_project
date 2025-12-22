@@ -42,4 +42,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </select>
 
     <button class="btn btn-success">บันทึก</button>
+    <a href="../sidebar.php?link=Dashboard" class="btn btn-primary">กลับไปหน้าหลัก</a>
 </form>

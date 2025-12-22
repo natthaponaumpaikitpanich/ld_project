@@ -1,6 +1,7 @@
 <?php
 // system/transactions.php
 
+
 $filter = $_GET['filter'] ?? 'all';
 
 $where = '';
@@ -10,7 +11,6 @@ if ($filter === 'today') {
     $where = "WHERE MONTH(pay.paid_at) = MONTH(CURDATE())
               AND YEAR(pay.paid_at) = YEAR(CURDATE())";
 }
-
 $sql = "
 SELECT
     pay.id AS payment_id,
@@ -28,9 +28,68 @@ ORDER BY pay.paid_at DESC
 ";
 
 $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+$summarySql = "
+SELECT
+    COUNT(pay.id) AS total_txn,
+    SUM(CASE WHEN pay.status='success' THEN pay.amount ELSE 0 END) AS total_amount,
+    SUM(CASE WHEN pay.status='success' THEN 1 ELSE 0 END) AS success_txn,
+    SUM(CASE WHEN pay.status!='success' THEN 1 ELSE 0 END) AS failed_txn,
+    COUNT(DISTINCT s.id) AS total_store
+FROM payments pay
+LEFT JOIN orders o ON pay.order_id = o.id
+LEFT JOIN stores s ON o.store_id = s.id
+$where
+";
+
+$summary = $pdo->query($summarySql)->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container mt-4">
+    <div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6 class="text-muted">ยอดเงินรวม</h6>
+                <h4 class="fw-bold text-success">
+                    <?= number_format($summary['total_amount'] ?? 0, 2) ?> ฿
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6 class="text-muted">ธุรกรรมทั้งหมด</h6>
+                <h4 class="fw-bold">
+                    <?= $summary['total_txn'] ?? 0 ?>
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6 class="text-muted">สำเร็จ</h6>
+                <h4 class="fw-bold text-primary">
+                    <?= $summary['success_txn'] ?? 0 ?>
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6 class="text-muted">ไม่สำเร็จ</h6>
+                <h4 class="fw-bold text-danger">
+                    <?= $summary['failed_txn'] ?? 0 ?>
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
 
     <h3 class="mb-3">📑 รายงานธุรกรรม</h3>
 
@@ -92,6 +151,13 @@ $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <div class="mb-3 d-flex gap-3 align-items-center">
+    <!-- EXPORT -->
+    <a href="system/transactions_export.php?filter=<?= $filter ?>"
+       class="btn btn-success ms-auto bi bi-file-earmark-excel-fill">
+       Export
+    </a>
+</div>
                 </tbody>
 
             </table>

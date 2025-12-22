@@ -16,6 +16,8 @@ $result = mysqli_query($conn, $sql);
 
     
 </head>
+<?php
+include_once '../assets/style.php'; ?>
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center">

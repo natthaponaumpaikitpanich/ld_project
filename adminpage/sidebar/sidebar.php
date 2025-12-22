@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../bootstrap/bootstrap-icons.css" rel="stylesheet">
+    
 
     <title>ซักอบรีด</title>
 </head>
@@ -18,6 +19,7 @@
         height: 100vh;
         position: fixed;
         background: #14253fff;
+        
         /* เทาเข้ม */
         color: white;
         transition: 0.3s;
@@ -81,7 +83,9 @@
 </style>
 <?php
 include_once '../index.php';
+include_once '../assets/style.php';
 include_once '../body.php';
+$report_id = $_GET['id'] ?? null;
 ?>
 
 
@@ -111,10 +115,8 @@ include_once '../body.php';
     <!-- SYSTEM -->
     <hr style="border-color:#FFFFFF ;">
     <a href="sidebar.php?link=transactions"><i class="bi bi-bar-chart"></i> <span>รายงานธุรกรรม</span></a>
-    <a href="sidebar.php?link="><i class="bi bi-reception-4"></i> <span>สถิติรวมทั้งระบบ</span></a>
-    <a href="system/daily.php"><i class="bi bi-calendar-event"></i> <span>การใช้งานระบบรายวัน</span></a>
-
-    <!-- LOGOUT -->
+    <a href="sidebar.php?link=reports"><i class="bi bi-flag-fill"></i> <span>รายงานจากร้าน</span></a>
+    
     <hr style="border-color:#FFFFFF ;">
     <a href="../../loginpage/logout.php"><i class="bi bi-box-arrow-left"></i> <span>ออกจากระบบ</span></a>
 

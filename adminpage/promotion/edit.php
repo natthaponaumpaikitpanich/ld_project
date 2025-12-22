@@ -54,16 +54,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     header("Location: index.php?updated=1");
     exit;
+    
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="th">
+<?php include_once '../assets/style.php'; ?>
 
 <head>
     <meta charset="UTF-8">
     <title>แก้ไขโปรโมชั่น</title>
-    <link rel="stylesheet" href="../../bootstrap-5.3.3-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
 </head>
 
 <body class="bg-light">
