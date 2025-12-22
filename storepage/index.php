@@ -20,7 +20,7 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
   <meta charset="UTF-8" />
   <title>ร้านซักอบรีด</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="../image/3.jpg">
+  
   <!-- Bootstrap Offline -->
   <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">

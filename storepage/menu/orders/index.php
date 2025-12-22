@@ -1,6 +1,4 @@
 <?php
-
-
 // สมมติว่ามี store_id อยู่ใน session
 $store_id = $_SESSION['store_id'] ?? null;
 if (!$store_id) {
@@ -50,21 +48,25 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>สถานะ</th>
                         <th>อัปเดตสถานะ</th>
                         <th>วันที่สั่ง</th>
+                        <th>รายละเอียด</th> <!-- ✅ เพิ่มคอลัมน์ -->
                     </tr>
                 </thead>
                 <tbody>
 
                 <?php if (empty($orders)): ?>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="7" class="text-center text-muted">
                             ยังไม่มีรายการสั่งซื้อ
                         </td>
                     </tr>
+                    
                 <?php else: ?>
                     <?php foreach ($orders as $i => $o): ?>
                     <tr>
-                        <td><?= $i+1 ?></td>
+                        <td><?= $i + 1 ?></td>
+
                         <td><?= htmlspecialchars($o['order_number']) ?></td>
+
                         <td><?= number_format($o['total_amount'], 2) ?> ฿</td>
 
                         <td>
@@ -85,9 +87,11 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </span>
                         </td>
 
+                        <!-- อัปเดตสถานะ -->
                         <td>
                             <form method="POST" class="d-flex gap-2">
                                 <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
+
                                 <select name="status" class="form-select form-select-sm">
                                     <?php
                                     $statuses = [
@@ -100,16 +104,23 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     ];
                                     foreach ($statuses as $s):
                                     ?>
-                                        <option value="<?= $s ?>" <?= $o['status']==$s?'selected':'' ?>>
+                                    
+                                        <option value="<?= $s ?>" <?= $o['status'] === $s ? 'selected' : '' ?>>
                                             <?= $s ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button class="btn btn-sm btn-primary">อัปเดต</button>
+
+                                <button class="btn btn-sm btn-primary">
+                                    อัปเดต
+                                </button>
                             </form>
                         </td>
 
-                        <td><?= date('d/m/Y H:i', strtotime($o['created_at'])) ?></td>
+                        <td>
+                            <?= date('d/m/Y H:i', strtotime($o['created_at'])) ?>
+                        </td>
+
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
