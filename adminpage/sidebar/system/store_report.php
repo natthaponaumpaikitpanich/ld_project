@@ -38,7 +38,7 @@ $report = $stmt->fetch(PDO::FETCH_ASSOC);
             <p><strong>โทร:</strong> <?= htmlspecialchars($store['phone'] ?? 'ไม่ระบุเบอร์โทร') ?></p>
             <p><strong>หัวข้อ:</strong> <?= htmlspecialchars($report['title']) ?></p>
 
-            <p><strong>รายละเอียด:</strong><br>
+            <p><strong> รายละเอียด:</strong><br>
                 <?= nl2br(htmlspecialchars($report['message'])) ?>
             </p>
 
