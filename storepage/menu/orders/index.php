@@ -1,6 +1,4 @@
 <?php
-
-
 // สมมติว่ามี store_id อยู่ใน session
 $store_id = $_SESSION['store_id'] ?? null;
 if (!$store_id) {
@@ -58,8 +56,13 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>หมายเหตุ</th>
                         <th>สถานะ</th>
                         <th>อัปเดตสถานะ</th>
+<<<<<<< HEAD
                         <th>วันที่สร้าง</th>
                         <th>จัดการ</th>
+=======
+                        <th>วันที่สั่ง</th>
+                        <th>รายละเอียด</th> <!-- ✅ เพิ่มคอลัมน์ -->
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                     </tr>
                 </thead>
                 <tbody>
@@ -67,9 +70,14 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php if (empty($orders)): ?>
                     <tr>
                         <td colspan="7" class="text-center text-muted">
+<<<<<<< HEAD
                             ยังไม่มีงานซัก
+=======
+                            ยังไม่มีรายการสั่งซื้อ
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                         </td>
                     </tr>
+                    
                 <?php else: ?>
 
                 <?php foreach ($orders as $i => $o): ?>
@@ -88,8 +96,15 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     <tr>
                         <td><?= $i + 1 ?></td>
+<<<<<<< HEAD
                         <td><?= htmlspecialchars($o['order_number']) ?></td>
                         <td><?= htmlspecialchars($o['notes'] ?? '-') ?></td>
+=======
+
+                        <td><?= htmlspecialchars($o['order_number']) ?></td>
+
+                        <td><?= number_format($o['total_amount'], 2) ?> ฿</td>
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
 
                         <td>
                             <span class="badge bg-<?= $badge ?>">
@@ -97,9 +112,16 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </span>
                         </td>
 
+<<<<<<< HEAD
                         <td style="width:220px;">
                             <form method="post" class="d-flex gap-2">
+=======
+                        <!-- อัปเดตสถานะ -->
+                        <td>
+                            <form method="POST" class="d-flex gap-2">
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                                 <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
+
                                 <select name="status" class="form-select form-select-sm">
                                     <?php
                                     $statuses = [
@@ -112,12 +134,23 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     ];
                                     foreach ($statuses as $s):
                                     ?>
+<<<<<<< HEAD
+=======
+                                    
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                                         <option value="<?= $s ?>" <?= $o['status'] === $s ? 'selected' : '' ?>>
                                             <?= $s ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+<<<<<<< HEAD
                                 <button class="btn btn-sm btn-primary">บันทึก</button>
+=======
+
+                                <button class="btn btn-sm btn-primary">
+                                    อัปเดต
+                                </button>
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                             </form>
                         </td>
 
@@ -125,12 +158,15 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?= date('d/m/Y H:i', strtotime($o['created_at'])) ?>
                         </td>
 
+<<<<<<< HEAD
                         <td>
                             <a href="menu/orders/order_view.php?id=<?= $o['id'] ?>"
                                class="btn btn-sm btn-outline-info">
                                ดูรายละเอียด
                             </a>
                         </td>
+=======
+>>>>>>> b8413d33f720bfbfdad726b30edfa9749767ce2e
                     </tr>
 
                 <?php endforeach; ?>

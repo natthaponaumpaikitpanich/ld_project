@@ -1,6 +1,5 @@
 
 <?php
-
 $sql = "
 SELECT
     r.id,
@@ -12,33 +11,39 @@ SELECT
     s.phone
 FROM reports r
 LEFT JOIN stores s ON r.store_id = s.id
+ORDER BY r.created_at DESC
 ";
-$sqll = "
-SELECT
-    s.id,
-    s.name,
-    s.phone
-    FROM stores s";
 
-$stmt = $pdo->prepare($sqll);
-$stmt->execute([]);
-$store = $stmt->fetch(PDO::FETCH_ASSOC);
 $stmt = $pdo->prepare($sql);
-$stmt->execute([]);
+$stmt->execute();
+$reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $pdo->query("
+    SELECT r.*, s.name AS store_name, s.phone
+    FROM reports r
+    LEFT JOIN stores s ON r.store_id = s.id
+    ORDER BY r.created_at DESC
+    LIMIT 1
+");
+
 $report = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!$report) {
+    echo "<div class='alert alert-secondary text-center'>
+            ไม่มีการรายงานปัญหา
+          </div>";
+    return;
+}
 ?>
 
+<?php foreach ($reports as $report): ?>
 <div class="container mt-4">
-    <h4 class="mb-3">📩 รายละเอียดแจ้งปัญหา</h4>
-    <div class="card shadow">
+    <div class="card shadow mb-3">
         <div class="card-body">
-         
-            <p><strong>ร้าน:</strong> <?= htmlspecialchars($store['name'] ?? 'ไม่ระบุชื่อ') ?></p>
-            <p><strong>โทร:</strong> <?= htmlspecialchars($store['phone'] ?? 'ไม่ระบุเบอร์โทร') ?></p>
+            <p><strong>ร้าน:</strong> <?= htmlspecialchars($report['store_name'] ?? 'ไม่ระบุ') ?></p>
+            <p><strong>โทร:</strong> <?= htmlspecialchars($report['phone'] ?? '-') ?></p>
             <p><strong>หัวข้อ:</strong> <?= htmlspecialchars($report['title']) ?></p>
 
-            <p><strong> รายละเอียด:</strong><br>
+            <p><strong>รายละเอียด:</strong><br>
                 <?= nl2br(htmlspecialchars($report['message'])) ?>
             </p>
 
@@ -47,17 +52,19 @@ $report = $stmt->fetch(PDO::FETCH_ASSOC);
             </p>
 
             <div class="mt-4 d-flex gap-2">
-                <a href="system/report_action.php"
-                   class="btn btn-success">
-                    ✅ รับเรื่อง
-                </a>
+    <a href="system/report_action.php?action=accept&id=<?= $report['id'] ?>"
+   class="btn btn-success">
+   ✅ รับเรื่อง
+</a>
 
-                <a href="system/report_action.php"
-                   class="btn btn-danger">
-                    ❌ ไม่อนุมัติ
-                </a>
+<a href="system/report_action.php?action=reject&id=<?= $report['id'] ?>"
+   class="btn btn-danger">
+   ❌ ไม่อนุมัติ
+</a>
+</div>
             </div>
         </div>
     </div>
 </div>
-
+<?php endforeach; ?>
+<?php ?>
