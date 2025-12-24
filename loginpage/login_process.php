@@ -77,7 +77,36 @@ if ($user['role'] === 'platform_admin') {
     header("Location: ../storepage/index.php");
     exit;
 
-} else {
+} elseif ($user['role'] === 'staff') {
+
+    // 🔑 staff ต้องสังกัดร้าน
+    $sql = "SELECT s.id, s.name
+            FROM store_staff ss
+            JOIN stores s ON ss.store_id = s.id
+            WHERE ss.user_id = ?
+            LIMIT 1";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $user['id']);
+    $stmt->execute();
+    $store = $stmt->get_result()->fetch_assoc();
+
+    if (!$store) {
+        $_SESSION['error'] = "บัญชีพนักงานยังไม่ผูกกับร้าน";
+        header("Location: login.php");
+        exit;
+    }
+
+    $_SESSION['store_id']   = $store['id'];
+    $_SESSION['store_name'] = $store['name'];
+
+    // 👉 หน้าเดียวสำหรับ staff + rider
+    header("Location: ../staffpage/index.php");
+    exit;
+}
+
+
+else {
 
     header("Location: ../userspage/users.php");
     exit;} ?>
