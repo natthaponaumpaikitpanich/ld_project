@@ -128,7 +128,7 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         <small class="text-muted">บริหารจัดการธุรกิจบริการซักรีดของคุณ</small>
       </div>
       <div class="d-flex align-items-center gap-2">
-        
+       <a href="../loginpage/logout.php"><div class="btn btn-danger">ออกจากระบบ</div></a>
         <a href="index.php?link=profile" class=""><i class="bi bi-person-circle fs-3 "> </i></a>
       </div>
     </div>

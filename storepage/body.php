@@ -21,5 +21,8 @@ elseif ($link == 'editprofile') {
 elseif ($link == 'delivery') {
     include_once "menu/delivery/index.php";
 }
+elseif ($link == 'revenue') {
+    include_once "menu/revenue/index.php";
+}
 
 ?>

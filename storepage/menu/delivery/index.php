@@ -102,7 +102,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                    สร้างงานจัดส่ง
                                 </a>
                             <?php else: ?>
-                                <a href="delivery_view.php?id=<?= $o['pickup_id'] ?>"
+                                <a href="menu/delivery/delivery_view.php?id=<?= $o['pickup_id'] ?>"
                                    class="btn btn-sm btn-outline-info">
                                    ดูรายละเอียด
                                 </a>

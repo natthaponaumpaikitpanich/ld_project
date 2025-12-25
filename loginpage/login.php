@@ -41,6 +41,9 @@
                 <label>เบอร์โทร</label>
                 <input type="text" name="phone" class="form-control" required>
             </div>
+            <div class="text-center">
+            <a href="">ลืมรหัสผ่านใช่หรือไม่</a>
+            </div>
             <button class="btn btn-primary w-100">เข้าสู่ระบบ</button>
         </form>
     </div>
