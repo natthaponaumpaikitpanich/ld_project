@@ -1,4 +1,5 @@
 <?php
+include 'assets/boostap.php';
 include 'assets/style.php';
 include 'assets/sum.php';
 
@@ -31,6 +32,7 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     
     body {
       background: #f5f7fb;
+      font-family: 'Kanit', sans-serif;
     }
 
     .card {
@@ -129,9 +131,9 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         <h4 class="mb-0">Dashboardของเจ้าของร้าน</h4>
         <small class="text-muted">บริหารจัดการธุรกิจบริการซักรีดของคุณ</small>
       </div>
-      <div class="d-flex align-items-center gap-2">
-       <a href="../loginpage/logout.php"><div class="btn btn-danger">ออกจากระบบ</div></a>
-        <a href="index.php?link=profile" class=""><i class="bi bi-person fs-3 "> </i></a>
+      <div class="d-flex align-items-center gap-3">
+       <a href="../loginpage/logout.php"><div class="btn btn-danger bi bi-box-arrow-left"> ออกจากระบบ</div></a>
+        <a href="index.php?link=profile"><div class="btn btn-primary bi bi-person"> แก้ไขโปรไฟล์</div></a>
       </div>
     </div>
     <?php if (!empty($promos)): ?>
