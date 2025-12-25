@@ -1,5 +1,7 @@
 <?php
 include 'assets/style.php';
+include 'assets/sum.php';
+
 
 $sql = "
 SELECT title, image
@@ -129,7 +131,7 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
       </div>
       <div class="d-flex align-items-center gap-2">
        <a href="../loginpage/logout.php"><div class="btn btn-danger">ออกจากระบบ</div></a>
-        <a href="index.php?link=profile" class=""><i class="bi bi-person-circle fs-3 "> </i></a>
+        <a href="index.php?link=profile" class=""><i class="bi bi-person fs-3 "> </i></a>
       </div>
     </div>
     <?php if (!empty($promos)): ?>
@@ -163,8 +165,8 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
       <div class="col-md-4">
         <div class="card p-3 shadow-sm stat-card">
           <div>
-            <small class="text-muted">รายได้วันนี้</small>
-            <h4>$</h4>
+            <small class="text-center">รายได้วันนี้</small>
+           <h4> <?= number_format($today_income, 2) ?> ฿</h4>
 
           </div>
           <div class="stat-icon bg-primary">
@@ -177,7 +179,8 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         <div class="card p-3 shadow-sm stat-card">
           <div>
             <small class="text-muted">รายได้ประจำเดือนนี้</small>
-            <h4>$</h4>
+                     <h4><?= number_format($month_income, 2) ?> ฿</h4>
+
 
           </div>
           <div class="stat-icon bg-info">
@@ -189,11 +192,11 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
       <div class="col-md-4">
         <div class="card p-3 shadow-sm stat-card">
           <div>
-            <small class="text-muted">ยอดสั่งซื้อวันนี้ทั้งหมด</small>
-            <h4>$</h4>
+            <small class="text-muted">ยอดผู้ใช้ทั้งหมด</small>
+            <h4><?= number_format($month_income) ?> คน</h4>
           </div>
           <div class="stat-icon bg-success">
-            <i class="bi bi-box"></i>
+            <i class="bi bi-person"></i>
           </div>
         </div>
       </div>

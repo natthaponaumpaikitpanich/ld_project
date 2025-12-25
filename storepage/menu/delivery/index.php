@@ -1,6 +1,4 @@
 <?php
-
-
 $store_id = $_SESSION['store_id'] ?? null;
 if (!$store_id) {
     die('ไม่พบข้อมูลร้าน');
@@ -33,7 +31,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>การจัดส่ง</title>
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 
 <body>

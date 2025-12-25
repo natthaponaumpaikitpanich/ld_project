@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 require_once "../../assets/boostap.php";
@@ -32,6 +33,14 @@ $stmt = $pdo->prepare("
 $stmt->execute([$order_id]);
 $pickup = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    
 
 <div class="container mt-4">
 
@@ -53,8 +62,23 @@ $pickup = $stmt->fetch(PDO::FETCH_ASSOC);
         <div class="alert alert-info">
             มีงานจัดส่งแล้ว <br>
             สถานะ: <b><?= $pickup['status'] ?></b>
+            <?php if ($order['payment_status'] !== 'paid'): ?>
+    <button 
+        class="btn btn-success"
+        data-bs-toggle="modal"
+        data-bs-target="#paymentModal">
+        💰 บันทึกการชำระเงิน
+    </button>
+    
+<?php else: ?>
+    <span class="badge bg-success">ชำระเงินแล้ว</span>
+<?php endif; ?>
+
         </div>
+        
     <?php else: ?>
+        <div>
+        </div>
         <form method="post" action="delivery_create.php">
             <input type="hidden" name="order_id" value="<?= $order_id ?>">
 
@@ -74,8 +98,47 @@ $pickup = $stmt->fetch(PDO::FETCH_ASSOC);
         </form>
     <?php endif; ?>
 
-    <a href="../../index.php?link=orders" class="btn btn-secondary mt-3">
+    <a href="../../index.php?link=orders" class="btn btn-warning mt-3">
         ← กลับหน้า Orders
     </a>
 
 </div>
+<div class="modal fade" id="paymentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" action="payment_store.php" class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">บันทึกการชำระเงิน</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+        <input type="hidden" name="amount" value="<?= $order['total_amount'] ?>">
+
+        <div class="mb-3">
+          <label class="form-label">วิธีชำระเงิน</label>
+          <select name="provider" class="form-select" required>
+            <option value="cash">เงินสด</option>
+            <option value="transfer">โอนเงิน</option>
+            <option value="promptpay">PromptPay</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">หมายเหตุ</label>
+          <input type="text" name="note" class="form-control">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-success">บันทึกการชำระเงิน</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+</body>
+</html>

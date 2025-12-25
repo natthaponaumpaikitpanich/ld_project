@@ -44,7 +44,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Orders | ร้านซักผ้า</title>
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
 </head>
 <body>
 

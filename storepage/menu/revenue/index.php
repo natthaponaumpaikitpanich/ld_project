@@ -1,123 +1,114 @@
 <?php
 
-
 $store_id = $_SESSION['store_id'] ?? null;
 if (!$store_id) {
-    die("ไม่พบข้อมูลร้าน");
+    die("ไม่พบร้าน");
 }
 
-/* ---------- SUMMARY ---------- */
-
-// รายได้วันนี้
+/* ---------- รายได้วันนี้ ---------- */
 $stmt = $pdo->prepare("
-    SELECT SUM(total_amount) 
-    FROM orders
-    WHERE store_id = ?
-      AND status = 'completed'
-      AND DATE(created_at) = CURDATE()
+    SELECT SUM(p.amount) 
+    FROM payments p
+    JOIN orders o ON p.order_id = o.id
+    WHERE p.status = 'success'
+      AND o.store_id = ?
+      AND DATE(p.paid_at) = CURDATE()
 ");
 $stmt->execute([$store_id]);
-$today_revenue = $stmt->fetchColumn() ?? 0;
+$today_income = $stmt->fetchColumn() ?? 0;
 
-// รายได้เดือนนี้
+/* ---------- รายได้เดือนนี้ ---------- */
 $stmt = $pdo->prepare("
-    SELECT SUM(total_amount) 
-    FROM orders
-    WHERE store_id = ?
-      AND status = 'completed'
-      AND MONTH(created_at) = MONTH(CURDATE())
-      AND YEAR(created_at) = YEAR(CURDATE())
+    SELECT SUM(p.amount)
+    FROM payments p
+    JOIN orders o ON p.order_id = o.id
+    WHERE p.status = 'success'
+      AND o.store_id = ?
+      AND MONTH(p.paid_at) = MONTH(CURDATE())
+      AND YEAR(p.paid_at) = YEAR(CURDATE())
 ");
 $stmt->execute([$store_id]);
-$month_revenue = $stmt->fetchColumn() ?? 0;
+$month_income = $stmt->fetchColumn() ?? 0;
 
-// จำนวนออเดอร์สำเร็จ
+/* ---------- รายการชำระเงิน ---------- */
 $stmt = $pdo->prepare("
-    SELECT COUNT(*) 
-    FROM orders
-    WHERE store_id = ?
-      AND status = 'completed'
+    SELECT 
+        p.amount,
+        p.provider,
+        p.status,
+        p.paid_at,
+        o.order_number
+    FROM payments p
+    JOIN orders o ON p.order_id = o.id
+    WHERE o.store_id = ?
+    ORDER BY p.paid_at DESC
 ");
 $stmt->execute([$store_id]);
-$total_orders = $stmt->fetchColumn();
-
-/* ---------- LIST ---------- */
-$stmt = $pdo->prepare("
-    SELECT order_number, total_amount, created_at
-    FROM orders
-    WHERE store_id = ?
-      AND status = 'completed'
-    ORDER BY created_at DESC
-");
-$stmt->execute([$store_id]);
-$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container mt-4">
 
     <h3 class="mb-4">💰 รายได้ร้าน</h3>
 
-    <!-- SUMMARY -->
-    <div class="row g-3 mb-4">
-
-        <div class="col-md-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
             <div class="card p-3 shadow-sm">
                 <small class="text-muted">รายได้วันนี้</small>
-                <h4><?= number_format($today_revenue, 2) ?> ฿</h4>
+                <h4 class="text-success">
+                    <?= number_format($today_income, 2) ?> ฿
+                </h4>
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card p-3 shadow-sm">
                 <small class="text-muted">รายได้เดือนนี้</small>
-                <h4><?= number_format($month_revenue, 2) ?> ฿</h4>
+                <h4 class="text-primary">
+                    <?= number_format($month_income, 2) ?> ฿
+                </h4>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm">
-                <small class="text-muted">ออเดอร์ที่สำเร็จ</small>
-                <h4><?= $total_orders ?> รายการ</h4>
-            </div>
-        </div>
-
     </div>
 
-    <!-- TABLE -->
     <div class="card shadow-sm">
         <div class="card-body">
+            <h5 class="mb-3">ประวัติการชำระเงิน</h5>
 
-            <table class="table table-hover align-middle">
-                <thead class="table-primary">
+            <table class="table table-hover">
+                <thead class="table-light">
                     <tr>
-                        <th>#</th>
-                        <th>เลขออเดอร์</th>
-                        <th>ยอดเงิน</th>
-                        <th>วันที่สำเร็จ</th>
+                        <th>Order</th>
+                        <th>จำนวนเงิน</th>
+                        <th>ช่องทาง</th>
+                        <th>สถานะ</th>
+                        <th>วันที่ชำระ</th>
                     </tr>
                 </thead>
                 <tbody>
-
-                <?php if (empty($orders)): ?>
+                    <?php foreach ($payments as $p): ?>
                     <tr>
-                        <td colspan="4" class="text-center text-muted">
-                            ยังไม่มีรายได้
+                        <td><?= htmlspecialchars($p['order_number']) ?></td>
+                        <td><?= number_format($p['amount'], 2) ?> ฿</td>
+                        <td><?= $p['provider'] ?></td>
+                        <td>
+                            <span class="badge bg-success">
+                                <?= $p['status'] ?>
+                            </span>
+                        </td>
+                        <td><?= date('d/m/Y H:i', strtotime($p['paid_at'])) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+
+                    <?php if (empty($payments)): ?>
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            ยังไม่มีการชำระเงิน
                         </td>
                     </tr>
-                <?php else: ?>
-                    <?php foreach ($orders as $i => $o): ?>
-                        <tr>
-                            <td><?= $i + 1 ?></td>
-                            <td><?= htmlspecialchars($o['order_number']) ?></td>
-                            <td><?= number_format($o['total_amount'], 2) ?> ฿</td>
-                            <td><?= date('d/m/Y H:i', strtotime($o['created_at'])) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-
+                    <?php endif; ?>
                 </tbody>
             </table>
-
         </div>
     </div>
 
