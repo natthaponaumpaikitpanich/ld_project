@@ -24,5 +24,8 @@ elseif ($link == 'delivery') {
 elseif ($link == 'revenue') {
     include_once "menu/revenue/index.php";
 }
+elseif ($link == 'management') {
+    include_once "menu/staff_edit/staff_index.php";
+}
 
 ?>
