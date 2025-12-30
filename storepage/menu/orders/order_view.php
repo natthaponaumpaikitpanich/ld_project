@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "../../assets/boostap.php";
+include_once "../../assets/boostap.php";
 require_once "../../../ld_db.php";
 
 $store_id = $_SESSION['store_id'] ?? null;

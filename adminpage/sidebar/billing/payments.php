@@ -44,7 +44,7 @@ $payments = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                             <th>Order ID</th>
                             <th>จำนวนเงิน</th>
                             <th>ช่องทางชำระ</th>
-                            <th>รหัสธุรกรรม</th>
+                            
                             <th>วันที่ชำระ</th>
                             <th>สถานะ</th>
                         </tr>
@@ -55,10 +55,10 @@ $payments = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                         <?php foreach ($payments as $p): ?>
                             <tr>
                                 <td><?= htmlspecialchars($p['id']) ?></td>
-                                <td><?= htmlspecialchars($p['order_id']) ?></td>
+                                <td><?= htmlspecialchars($p['store_name']) ?></td>
                                 <td><?= number_format($p['amount'], 2) ?> ฿</td>
                                 <td><?= htmlspecialchars(strtoupper($p['provider'])) ?></td>
-                                <td><?= htmlspecialchars($p['provider_txn_id'] ?? '-') ?></td>
+                                
                                 <td>
                                     <?= $p['paid_at'] ? date('d/m/Y H:i', strtotime($p['paid_at'])) : '-' ?>
                                 </td>

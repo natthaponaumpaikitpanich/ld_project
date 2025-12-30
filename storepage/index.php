@@ -27,7 +27,8 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
   <!-- Bootstrap Offline -->
   <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
-
+  
+<title>ร้านซักอบรีด</title>
   <style>
     
     body {
@@ -86,6 +87,9 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     .bg-grad-staff {
       background: linear-gradient(135deg, #ac5ff9ff, #ff009dff);
     }
+    .bg-grad-qrcode {
+      background: linear-gradient(135deg, #5fd8f9ff, #c300ffff);
+    }
      .bg-grad-promotion {
       background: linear-gradient(135deg, #ff06d5ff, #00d9ffff);
     }
@@ -118,6 +122,7 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     transform: scale(1.1);
 }
   </style>
+  
 </head>
 
 <body>
@@ -226,6 +231,10 @@ $promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
       <div class="col-md-3">
         <a href="index.php?link=management" class="btn btn-dark btn-lg quick-btn bg-grad-staff w-100 p-3">
           การจัดการพนักงาน </a>
+      </div>
+      <div class="col">
+        <a href="index.php?link=qrcode" class="btn btn-dark btn-lg quick-btn bg-grad-qrcode w-100 p-3">
+          สร้างQR Code </a>
       </div>
       <div class="#body">
         <?php include_once  'body.php'; ?>

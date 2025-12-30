@@ -9,17 +9,18 @@ if (isset($_GET['link'])) {
 if ($link == 'home') {
     include_once "index.php";
 }
-elseif ($link == 'orders') {
-    include_once "menu/orders/index.php";
+elseif ($link == 'Home') {
+    include_once "home.php";
 }
-elseif ($link == 'profile') {
-    include_once "profile/profile.php";
+elseif ($link == 'Tasks') {
+    include_once "menu/task/task.php";
 }
-elseif ($link == 'editprofile') {
-    include_once "profile/edit.php";
+elseif ($link == 'Scan') {
+    include_once "menu/scan/staff_scan_start.php";
 }
-elseif ($link == 'delivery') {
-    include_once "menu/delivery/index.php";
+elseif ($link == 'Profile') {
+    include_once "menu/profile/profile.php";
 }
+
 
 ?>

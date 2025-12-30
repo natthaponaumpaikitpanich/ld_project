@@ -13,5 +13,5 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$id, $store_id]);
 
-header("Location: staff_index.php");
+header("Location: ../../index.php?link=management");
 exit;

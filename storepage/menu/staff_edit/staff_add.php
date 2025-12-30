@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $user['id']
             ]);
 
-            header("Location: staff_index.php");
+            header("Location: ../../index.php?link=management");
             exit;
         }
     }

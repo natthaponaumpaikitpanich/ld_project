@@ -101,7 +101,7 @@ if ($user['role'] === 'platform_admin') {
     $_SESSION['store_name'] = $store['name'];
 
     // 👉 หน้าเดียวสำหรับ staff + rider
-    header("Location: ../staffpage/index.php");
+    header("Location: ../staffpage/index.php?link=Home");
     exit;
 }
 
