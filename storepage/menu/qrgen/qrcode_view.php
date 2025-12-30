@@ -24,7 +24,7 @@ $stmt = $pdo->prepare("SELECT * FROM machines WHERE id = ?");
 $stmt->execute([$id]);
 $machine = $stmt->fetch();
 
-$qr_url = "https://yourdomain.com/scan.php?code=".$machine['qr_code'];
+$qr_url = "http://localhost/ld_project/scan.php?machine_id=".$machine['id'];
 ?>
 
 <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<?= urlencode($qr_url) ?>">

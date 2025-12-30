@@ -16,11 +16,7 @@
     </div>
   <?php endforeach; ?>
 
-  <a href="index.php?link=Scan">
-    <button class="btn btn-primary w-100 mt-3 py-3">
-      📡 Scan QRCode
-    </button>
-  </a>
+  
 
 <a href="index.php?link=Tasks">
   <button class="btn btn-success w-100 mt-2 py-3"

@@ -1,5 +1,4 @@
 <?php
-
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'staff') {
     die('ไม่มีสิทธิ์เข้าถึงหน้านี้');
 }
@@ -27,26 +26,29 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>งานวันนี้</title>
-<link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
 </head>
 <body>
+<div class="container mt-3 mb-5">
 
-<div class="container mt-3">
 <h5 class="fw-bold">📋 งานที่ต้องทำวันนี้</h5>
 
 <?php if (!$tasks): ?>
-<div class="alert alert-warning">ยังไม่มีงานวันนี้</div>
+<div class="alert alert-primary">ยังไม่มีงานวันนี้</div>
 <?php endif; ?>
 
 <?php foreach ($tasks as $task): ?>
-<div class="card mb-2">
+<div class="card mb-3 shadow-sm">
 <div class="card-body">
-    <b><?= htmlspecialchars($task['customer_name']) ?></b><br>
-    Order: <?= $task['order_number'] ?><br>
-    <span class="badge bg-info"><?= $task['order_status'] ?></span>
 
-    <form method="post" action="menu/task/task_update_status.php" class="mt-2">
+    <b><?= htmlspecialchars($task['customer_name'] ?? '-') ?></b><br>
+    Order: <?= htmlspecialchars($task['order_number']) ?><br>
+    <span class="badge bg-info"><?= htmlspecialchars($task['order_status']) ?></span>
+
+    <!-- อัปเดตสถานะ -->
+    <form method="post"
+          action="menu/task/task_update_status.php"
+          class="mt-2">
+
         <input type="hidden" name="pickup_id" value="<?= $task['pickup_id'] ?>">
         <input type="hidden" name="order_id" value="<?= $task['order_id'] ?>">
 
@@ -59,39 +61,54 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <option value="completed">ส่งสำเร็จ</option>
         </select>
 
-        <button class="btn btn-success btn-sm w-100">
+        <button class="btn btn-success btn-sm w-100 mb-2">
             🔄 อัปเดตสถานะ
         </button>
-        <button class="btn btn-primary w-100 py-3"
-        onclick="window.location='menu/scan/scan_qr.php'">
- 📷 Scan QR Code
-</button>
     </form>
+
+    <!-- ปุ่ม Scan QR -->
+    <button class="btn btn-primary w-100"
+            onclick="openQRScanner()">
+        📷 Scan QR Code
+    </button>
+
 </div>
 </div>
 <?php endforeach; ?>
+
 </div>
+
+<!-- พื้นที่กล้อง (อยู่นอก loop เท่านั้น) -->
+<div id="qr-reader" style="width:100%; max-width:400px; margin:20px auto;"></div>
+
+<!-- Library -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
 function openQRScanner() {
+    const qrReader = document.getElementById("qr-reader");
+    qrReader.innerHTML = ""; // เคลียร์ก่อนเปิดใหม่
+
     const scanner = new Html5Qrcode("qr-reader");
 
     scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText) => {
-            // decodedText = tag_code
-            window.location.href =
-              "task.php?tag=" + encodeURIComponent(decodedText);
             scanner.stop();
+
+            // decodedText = machine_id หรือ tag
+            window.location.href =
+                "../scan.php?machine_id=" +
+                encodeURIComponent(decodedText);
+        },
+        (error) => {
+            // ignore scan errors
         }
     );
 }
-
 </script>
 
-<div id="qr-reader" style="width:100%;"></div>
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

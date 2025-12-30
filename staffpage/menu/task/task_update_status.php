@@ -8,7 +8,7 @@ $pickup_id  = $_POST['pickup_id'] ?? null;
 $order_id   = $_POST['order_id'] ?? null;
 $next_status = $_POST['next_status'] ?? null;
 
-if (!$staff_id || !$pickup_id || !$order_id || !$next_status) {
+if (!$staff_id || !$order_id || !$next_status) {
     die("ข้อมูลไม่ครบ");
 }
 
@@ -43,6 +43,25 @@ try {
         ");
         $stmt->execute([$pickup_id]);
     }
+    if ($next_status === 'completed') {
+
+    // update pickup
+    $stmt = $pdo->prepare("
+        UPDATE pickups
+        SET status = 'completed',
+            completed_at = NOW()
+        WHERE id = ?
+    ");
+    $stmt->execute([$pickup_id]);
+
+    // 🔥 ปลด machine
+    $stmt = $pdo->prepare("
+        UPDATE machine_orders
+        SET active = 0
+        WHERE order_id = ?
+    ");
+    $stmt->execute([$order_id]);
+}
 
     $pdo->commit();
 

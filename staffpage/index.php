@@ -64,7 +64,9 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 </head>
 <body>
-    
+  <div class="mt-3 d-flex justify-content-end p-3 ">
+    <a href="../loginpage/logout.php"><div class="btn btn-danger bi bi-box-arrow-left"> ออกจากระบบ</div></a>
+    </div>
 <?php include_once "body.php"; ?>
 <nav class="staff-bottom-nav">
   <a href="index.php?link=Home" class="active">
@@ -75,11 +77,6 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <i class="bi bi-list-task"></i>
     <span>Tasks</span>
   </a>
-  <a href="index.php?link=Scan">
-    <i class="bi bi-upc-scan"></i>
-    <span>Scan</span>
-  </a>
-
   <a href="index.php?link=Map">
     <i class="bi bi-map"></i>
     <span>Map</span>
