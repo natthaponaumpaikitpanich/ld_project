@@ -1,17 +1,17 @@
 <?php
-
-
 $sql = "
     SELECT
         pay.id,
         pay.order_id,
         pay.amount,
         pay.provider,
-        pay.provider_txn_id,
         pay.status,
         pay.paid_at,
-        pay.created_at
+        pay.created_at,
+        s.name AS store_name
     FROM payments pay
+    JOIN orders o ON pay.order_id = o.id
+    JOIN stores s ON o.store_id = s.id
     ORDER BY pay.created_at DESC
 ";
 
@@ -40,7 +40,7 @@ $payments = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 <table class="table table-striped">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th>ชื่อ</th>
                             <th>Order ID</th>
                             <th>จำนวนเงิน</th>
                             <th>ช่องทางชำระ</th>
@@ -54,9 +54,9 @@ $payments = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
                         <?php foreach ($payments as $p): ?>
                             <tr>
-                                <td><?= htmlspecialchars($p['id']) ?></td>
                                 <td><?= htmlspecialchars($p['store_name']) ?></td>
-                                <td><?= number_format($p['amount'], 2) ?> ฿</td>
+                                <td><?= htmlspecialchars($p['order_id']) ?></td>
+                                <td><?= number_format($p['amount'], 2) ?>฿</td>
                                 <td><?= htmlspecialchars(strtoupper($p['provider'])) ?></td>
                                 
                                 <td>
@@ -83,7 +83,7 @@ $payments = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
     </div>
 
-    <script src="/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

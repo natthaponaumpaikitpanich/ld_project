@@ -29,6 +29,8 @@ elseif ($link == 'management') {
 }
 elseif ($link == 'qrcode') {
     include_once "menu/qrgen/machines_index.php";
+}elseif ($link == 'promotion') {
+    include_once "menu/promotion/promotion_index.php";
 }
 
 ?>
