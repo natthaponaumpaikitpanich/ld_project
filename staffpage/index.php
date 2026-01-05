@@ -31,6 +31,9 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>งานจัดส่ง / รับผ้า</title>
     <style>
+      body {
+        background:#f4f6f9;
+      }
         .staff-bottom-nav {
     position: fixed;
     bottom: 0;

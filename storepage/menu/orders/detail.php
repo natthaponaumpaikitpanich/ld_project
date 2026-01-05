@@ -11,55 +11,44 @@ $user_id  = $_SESSION['user_id'];
 $order_id = $_GET['id'] ?? null;
 if (!$order_id) die('no order');
 
-/* ========= POST ========= */
-
-// เปลี่ยนสถานะ
+/* ========= POST : เปลี่ยนสถานะ ========= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next_status'])) {
-    $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("UPDATE orders SET status=? WHERE id=?");
-    $stmt->execute([$_POST['next_status'], $order_id]);
-
+    // 🔒 HARD GATE : ถ้ายังไม่จ่าย ห้ามไปต่อ
     $stmt = $pdo->prepare("
-        INSERT INTO order_status_logs (id, order_id, status, changed_by)
-        VALUES (UUID(),?,?,?)
+        SELECT payment_status, status
+        FROM orders
+        WHERE id = ?
     ");
-    $stmt->execute([$order_id, $_POST['next_status'], $user_id]);
-
-    $pdo->commit();
-    header("Location: detail.php?id=".$order_id);
-    exit;
-}
-
-// ตั้งราคา
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_price'])) {
-    $stmt = $pdo->prepare("
-        UPDATE orders SET total_amount=?, payment_status='pending'
-        WHERE id=?
-    ");
-    $stmt->execute([$_POST['total_amount'], $order_id]);
-    header("Location: detail.php?id=".$order_id);
-    exit;
-}
-
-// รับเงิน
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
-    $pdo->beginTransaction();
-
-    $stmt = $pdo->prepare("
-        INSERT INTO payments
-        (id, order_id, amount, provider, provider_txn_id, status, paid_at)
-        VALUES (UUID(),?,?,?,?, 'success', NOW())
-    ");
-    $stmt->execute([
-        $order_id,
-        $_POST['amount'],
-        $_POST['provider'],
-        $_POST['txn']
-    ]);
-
-    $stmt = $pdo->prepare("UPDATE orders SET payment_status='paid' WHERE id=?");
     $stmt->execute([$order_id]);
+    $chk = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($chk['status']==='ready' && $chk['payment_status']!=='paid') {
+        die('ยังไม่ได้ชำระเงิน');
+    }
+
+    $pdo->beginTransaction();
+
+    $next = $_POST['next_status'];
+
+    // update orders
+    $pdo->prepare("
+        UPDATE orders SET status=?
+        WHERE id=?
+    ")->execute([$next,$order_id]);
+
+    // update pickups
+    $pdo->prepare("
+        UPDATE pickups SET status=?
+        WHERE order_id=?
+    ")->execute([$next,$order_id]);
+
+    // log
+    $pdo->prepare("
+        INSERT INTO order_status_logs
+        (id,order_id,status,changed_by)
+        VALUES (UUID(),?,?,?)
+    ")->execute([$order_id,$next,$user_id]);
 
     $pdo->commit();
     header("Location: detail.php?id=".$order_id);
@@ -78,20 +67,45 @@ $stmt->execute([$order_id,$user_id]);
 $order = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$order) die('not found');
 
+/* ========= FETCH PAYMENT (ล่าสุด) ========= */
+$stmt = $pdo->prepare("
+    SELECT *
+    FROM payments
+    WHERE order_id=?
+    ORDER BY created_at DESC
+    LIMIT 1
+");
+$stmt->execute([$order_id]);
+$payment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+/* ========= HELPERS ========= */
 function label($s){
     return match($s){
-        'created'=>'รอรับงาน','picked_up'=>'รับผ้าแล้ว',
-        'in_process'=>'กำลังซัก','ready'=>'ซักเสร็จ',
-        'out_for_delivery'=>'กำลังส่ง','completed'=>'เสร็จงาน'
+        'created'=>'รอรับงาน',
+        'picked_up'=>'รับผ้าแล้ว',
+        'in_process'=>'กำลังซัก',
+        'ready'=>'ซักเสร็จ',
+        'out_for_delivery'=>'กำลังส่ง',
+        'completed'=>'เสร็จงาน',
+        default => $s
     };
 }
 function next_status($s){
     return match($s){
-        'created'=>'picked_up','picked_up'=>'in_process',
-        'in_process'=>'ready','ready'=>'out_for_delivery',
-        'out_for_delivery'=>'completed', default=>null
+        'created'=>'picked_up',
+        'picked_up'=>'in_process',
+        'in_process'=>'ready',
+        'ready'=>'out_for_delivery',
+        'out_for_delivery'=>'completed',
+        default=>null
     };
 }
+
+// 🔒 เช็กว่าสามารถไปต่อได้ไหม
+$can_next = !(
+    $order['status']==='ready'
+    && $order['payment_status']!=='paid'
+);
 ?>
 <!doctype html>
 <html lang="th">
@@ -99,54 +113,68 @@ function next_status($s){
 <meta charset="utf-8">
 <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
 <div class="container py-4">
 
-<h4><?= label($order['status']) ?> | <?= $order['order_number'] ?></h4>
+<h4 class="mb-2">
+    <?= label($order['status']) ?> | <?= htmlspecialchars($order['order_number']) ?>
+</h4>
+<p class="mb-3">👤 ลูกค้า: <?= htmlspecialchars($order['customer_name']) ?></p>
 
-<p>👤 ลูกค้า: <?= $order['customer_name'] ?></p>
+<!-- ================= PAYMENT STATUS ================= -->
+<div class="card mb-3">
+<div class="card-body">
+<h6 class="fw-bold mb-2">💳 การชำระเงิน</h6>
 
+<?php if (!$payment): ?>
+    <div class="alert alert-secondary mb-0">
+        ยังไม่มีการแจ้งชำระเงิน
+    </div>
+
+<?php elseif ($payment['status']==='pending'): ?>
+    <div class="alert alert-warning mb-2">
+        ลูกค้าส่งสลิปแล้ว รอการตรวจสอบ
+    </div>
+    <a href="../payment_confirm.php?id=<?= $payment['id'] ?>"
+       class="btn btn-success btn-sm">
+        ✅ ตรวจสอบสลิป
+    </a>
+
+<?php elseif ($payment['status']==='confirmed'): ?>
+    <div class="alert alert-success mb-0">
+        ชำระเงินเรียบร้อยแล้ว
+    </div>
+
+<?php elseif ($payment['status']==='rejected'): ?>
+    <div class="alert alert-danger mb-0">
+        การชำระเงินถูกปฏิเสธ
+    </div>
+<?php endif; ?>
+
+</div>
+</div>
+
+<!-- ================= NEXT STATUS ================= -->
 <?php if ($next = next_status($order['status'])): ?>
-<form method="post">
-    <input type="hidden" name="next_status" value="<?= $next ?>">
-    <button class="btn btn-primary mb-3">ไปขั้นถัดไป</button>
-</form>
-<?php endif; ?>
-
-<?php if ($order['status']==='ready'): ?>
-<div class="card mb-3 p-3">
-    <h6>💰 ตั้งราคา</h6>
-    <?php if ($order['total_amount']>0): ?>
-        <b><?= number_format($order['total_amount'],2) ?> บาท</b>
+    <?php if ($can_next): ?>
+        <form method="post">
+            <input type="hidden" name="next_status" value="<?= $next ?>">
+            <button class="btn btn-primary mb-3">
+                ไปขั้นถัดไป
+            </button>
+        </form>
     <?php else: ?>
-    <form method="post">
-        <input name="total_amount" type="number" class="form-control mb-2" required>
-        <button name="set_price" class="btn btn-success">บันทึกราคา</button>
-    </form>
+        <div class="alert alert-warning">
+            ⚠️ รอลูกค้าชำระเงินก่อนจึงจะไปต่อได้
+        </div>
     <?php endif; ?>
-</div>
 <?php endif; ?>
 
-<div class="card p-3 mb-3">
-<h6>💳 สถานะชำระเงิน</h6>
-<b><?= $order['payment_status'] ?></b>
+<a href="../../index.php?link=orders" class="btn btn-outline-secondary">
+    ← กลับ
+</a>
 
-<?php if ($order['payment_status']==='pending' && $order['total_amount']>0): ?>
-<form method="post" class="mt-2">
-    <input type="hidden" name="amount" value="<?= $order['total_amount'] ?>">
-    <input name="txn" class="form-control mb-2" placeholder="เลขอ้างอิง (ถ้ามี)">
-    <select name="provider" class="form-select mb-2">
-        <option value="cash">เงินสด</option>
-        <option value="transfer">โอน</option>
-    </select>
-    <button name="confirm_payment" class="btn btn-success">
-        รับเงินแล้ว
-    </button>
-</form>
-<?php endif; ?>
-</div>
-
-<a href="../../index.php?link=orders">← กลับ</a>
 </div>
 </body>
 </html>

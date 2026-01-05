@@ -14,7 +14,7 @@ if (!$pickup_id) {
 }
 
 /* -------------------------
-   ดึงข้อมูลงานจัดส่ง
+   ดึงข้อมูลงานจัดส่ง (PDO)
 -------------------------- */
 $sql = "
 SELECT 
@@ -42,10 +42,9 @@ WHERE p.id = ?
 LIMIT 1
 ";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $pickup_id);
-$stmt->execute();
-$data = $stmt->get_result()->fetch_assoc();
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$pickup_id]);
+$data = $stmt->fetch();
 
 if (!$data) {
     die("ไม่พบข้อมูลงานจัดส่ง");

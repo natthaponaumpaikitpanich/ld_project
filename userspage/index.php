@@ -2,13 +2,40 @@
 session_start();
 require_once "../ld_db.php";
 include_once "assets/head.php";
+// ===== FORCE PAYMENT CHECK =====
+$stmt = $pdo->prepare("
+    SELECT id
+    FROM orders
+    WHERE customer_id = ?
+      AND status = 'ready'
+      AND payment_status != 'paid'
+    ORDER BY created_at DESC
+    LIMIT 1
+");
+$stmt->execute([$_SESSION['user_id']]);
+$unpaidOrder = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($unpaidOrder) {
+    // ถ้ายังไม่ได้อยู่หน้าชำระเงิน → เด้ง
+    if (!str_contains($_SERVER['REQUEST_URI'], 'payment_promptpay.php')) {
+        header("Location: menu/payment_promptpay.php?id=".$unpaidOrder['id']);
+        exit;
+    }
+}
+
+
+
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
     header("Location: ../loginpage/login.php");
     exit;
 }
 
 $user_id = $_SESSION['user_id'];
-$stmt = $pdo->prepare("
+
+/* =========================
+   ดึงโปรโมชั่น
+   ========================= */
+$sqlPromotion = "
     SELECT 
         p.*,
         s.name AS store_name
@@ -21,16 +48,24 @@ $stmt = $pdo->prepare("
       AND p.end_date >= NOW()
     ORDER BY p.created_at DESC
     LIMIT 10
-");
-$stmt->execute();
-$promotions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$stmt = $pdo->prepare("
+";
+
+$stmtPromotion = $pdo->prepare($sqlPromotion);
+$stmtPromotion->execute();
+$promotions = $stmtPromotion->fetchAll();
+
+/* =========================
+   ดึงข้อมูลผู้ใช้
+   ========================= */
+$sqlUser = "
     SELECT display_name, email, phone, profile_image
     FROM users
     WHERE id = ?
-");
-$stmt->execute([$user_id]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+";
+
+$stmtUser = $pdo->prepare($sqlUser);
+$stmtUser->execute([$user_id]);
+$user = $stmtUser->fetch();
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -40,112 +75,107 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
     <title>หน้าหลักลูกค้า</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <title>ระบบร้านซักอบรีด</title>
 </head>
 
 <body>
-    <div class="container py-4">
+<div class="container py-3">
 
-        <!-- PROFILE -->
-        <nav class="navbar navbar-expand-lg bg-white sticky-top">
-    <div class="container">
-        <span class="navbar-brand fw-bold">🧺 Laundry System</span>
-
-        <div class="ms-auto d-flex align-items-center gap-3">
-            <div class="text-end">
-                <div class="fw-semibold"><?= htmlspecialchars($user['display_name']) ?></div>
-                <small class="text-muted">ลูกค้า</small>
-            </div>
-            <img src="../<?= $user['profile_image'] ?: 'assets/default-user.png' ?>" class="profile-img">
-            <a href="../loginpage/logout.php" class="btn btn-outline-danger btn-sm">
-                ออกจากระบบ
-            </a>
-        </div>
+<!-- ===== APP BAR ===== -->
+<div class="appbar d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <div class="fw-semibold"><?= htmlspecialchars($user['display_name']) ?></div>
+        <small class="text-muted">ลูกค้า</small>
     </div>
-</nav>
-        <?php if ($promotions): ?>
-            <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
 
-                    <?php foreach ($promotions as $index => $p): ?>
-                        <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                            <div class="card shadow-sm border-0">
+    <div class="d-flex align-items-center gap-2">
+        <img src="../<?= $user['profile_image'] ?: 'assets/default-user.png' ?>"
+             class="profile-img">
+        <a href="../loginpage/logout.php"
+           class="btn btn-outline-danger btn-sm">
+            ออก
+        </a>
+    </div>
+</div>
 
-                                <?php if (!empty($p['image'])): ?>
-                                    <img src="../<?= htmlspecialchars($p['image']) ?>"
-                                        class="d-block w-100 promo-img">
-                                <?php endif; ?>
-                                <div class="card-body">
+<!-- ===== HERO ===== -->
+<div class="hero mb-3">
+    <h5>🧺 ยินดีต้อนรับสู่ระบบซักอบรีด</h5>
+    <div class="small opacity-75">
+        ส่งผ้า · ติดตามงาน · ชำระเงิน ได้ในที่เดียว
+    </div>
+</div>
 
-                                </div>
+<!-- ===== PROMOTION ===== -->
+<?php if ($promotions): ?>
+<div id="promoCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        <?php foreach ($promotions as $i => $p): ?>
+        <div class="carousel-item <?= $i === 0 ? 'active' : '' ?>">
+            <img src="../<?= htmlspecialchars($p['image']) ?>"
+                 class="d-block w-100">
+        </div>
+        <?php endforeach; ?>
+    </div>
 
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+    <button class="carousel-control-prev" type="button"
+            data-bs-target="#promoCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button"
+            data-bs-target="#promoCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+<?php endif; ?>
 
-                </div>
+<!-- ===== QUICK MENU ===== -->
+<div class="row g-3">
 
-                <!-- controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
+<div class="col-6">
+<a href="menu/orders/create_order.php" class="text-decoration-none text-dark">
+<div class="card card-menu text-center p-4">
+    <i class="bi bi-basket text-primary"></i>
+    <div class="fw-semibold mt-2">ส่งซักผ้า</div>
+</div>
+</a>
+</div>
 
-                <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
-            </div>
-        <?php else: ?>
-            <div class="alert alert-light text-center">
-                ยังไม่มีโปรโมชั่นตอนนี้
-            </div>
-        <?php endif; ?>
-        <!-- MENU -->
-        <div class="row g-3">
+<div class="col-6">
+<a href="index.php?link=orders" class="text-decoration-none text-dark">
+<div class="card card-menu text-center p-4">
+    <i class="bi bi-clock-history text-success"></i>
+    <div class="fw-semibold mt-2">ติดตามสถานะ</div>
+</div>
+</a>
+</div>
 
-            <div class="col-6">
-                <a href="menu/orders/create_order.php" class="text-decoration-none text-dark">
-                    <div class="card card-menu text-center p-3">
-                        <i class="bi bi-basket fs-1 text-primary"></i>
-                        <div class="fw-semibold mt-2">ส่งซักผ้า</div>
-                    </div>
-                </a>
-            </div>
+<div class="col-6">
+<a href="payments.php" class="text-decoration-none text-dark">
+<div class="card card-menu text-center p-4">
+    <i class="bi bi-credit-card text-warning"></i>
+    <div class="fw-semibold mt-2">การชำระเงิน</div>
+</div>
+</a>
+</div>
 
-            <div class="col-6">
-                <a href="index.php?link=orders" class="text-decoration-none text-dark">
-                    <div class="card card-menu text-center p-3">
-                        <i class="bi bi-clock-history fs-1 text-success"></i>
-                        <div class="fw-semibold mt-2">ติดตามสถานะ</div>
-                    </div>
-                </a>
-            </div>
+<div class="col-6">
+<a href="index.php?link=profile" class="text-decoration-none text-dark">
+<div class="card card-menu text-center p-4">
+    <i class="bi bi-person-circle text-info"></i>
+    <div class="fw-semibold mt-2">โปรไฟล์</div>
+</div>
+</a>
+</div>
 
-            <div class="col-6">
-                <a href="payments.php" class="text-decoration-none text-dark">
-                    <div class="card card-menu text-center p-3">
-                        <i class="bi bi-credit-card fs-1 text-warning"></i>
-                        <div class="fw-semibold mt-2">ประวัติการชำระเงิน</div>
-                    </div>
-                </a>
-            </div>
+</div>
 
-            <div class="col-6">
-                <a href="index.php?link=profile" class="text-decoration-none text-dark">
-                    <div class="card card-menu text-center p-3">
-                        <i class="bi bi-person-circle fs-1 text-info"></i>
-                        <div class="fw-semibold mt-2">โปรไฟล์</div>
-                    </div>
-                </a>
-            </div>
 <?php include_once "body.php"; ?>
-        </div>
 
-    </div>
+</div>
 
-    <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

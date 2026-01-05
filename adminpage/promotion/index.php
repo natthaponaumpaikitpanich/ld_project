@@ -1,10 +1,14 @@
 <?php
 require_once "../../ld_db.php";
 
-
-// ดึงรายการโปรโมชั่นทั้งหมด
-$sql = "SELECT * FROM promotions ORDER BY created_at DESC";
-$result = mysqli_query($conn, $sql);
+// ดึงรายการโปรโมชั่นทั้งหมด (PDO)
+$stmt = $pdo->prepare("
+    SELECT *
+    FROM promotions
+    ORDER BY created_at DESC
+");
+$stmt->execute();
+$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <head>
     <meta charset="UTF-8">
@@ -38,7 +42,7 @@ include_once '../assets/style.php'; ?>
                 </thead>
                 <tbody>
 
-                    <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                    <?php foreach ($result as $row) { ?>
                         <tr>
                             <td><?= $row['title'] ?></td>
                             <td>

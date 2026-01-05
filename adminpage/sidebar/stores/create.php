@@ -79,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':billing_plan_id' => $billing_plan_id
         ]);
 
-        header("Location:sidebar.php?link=create");
         exit;
     }
 }

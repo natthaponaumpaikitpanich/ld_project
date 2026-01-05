@@ -13,10 +13,7 @@ elseif ($link == 'orders') {
     include_once "menu/orders/index.php";
 }
 elseif ($link == 'profile') {
-    include_once "profile/profile.php";
-}
-elseif ($link == 'editprofile') {
-    include_once "profile/edit.php";
+    include_once "menu/profile/profile.php";
 }
 elseif ($link == 'delivery') {
     include_once "menu/delivery/index.php";

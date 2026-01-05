@@ -1,6 +1,4 @@
 <?php
-
-
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
     header("Location: ../loginpage/login.php");
     exit;
@@ -14,8 +12,10 @@ $stmt = $pdo->prepare("
     FROM orders o
     JOIN stores s ON o.store_id = s.id
     WHERE o.customer_id = :customer_id
+      AND o.status != 'completed'
     ORDER BY o.created_at DESC
 ");
+
 $stmt->execute([':customer_id' => $customer_id]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

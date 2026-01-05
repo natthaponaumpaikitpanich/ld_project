@@ -1,64 +1,44 @@
 <?php
 session_start();
 require_once "../../../ld_db.php";
-include_once "../../assets/boostap.php";
-$store_id = $_SESSION['store_id'] ?? null;
-if (!$store_id) die("ไม่พบร้าน");
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    $email = $_POST['email'];
-
-    // หา user
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    if (!$user) {
-        $error = "ไม่พบผู้ใช้";
-    } else {
-
-        // เช็คซ้ำ
-        $stmt = $pdo->prepare("
-            SELECT 1 FROM store_staff 
-            WHERE store_id = ? AND user_id = ?
-        ");
-        $stmt->execute([$store_id, $user['id']]);
-
-        if ($stmt->fetch()) {
-            $error = "ผู้ใช้นี้อยู่ในร้านแล้ว";
-        } else {
-            $stmt = $pdo->prepare("
-                INSERT INTO store_staff (id, store_id, user_id, role)
-                VALUES (?, ?, ?, 'staff')
-            ");
-            $stmt->execute([
-                uniqid(),
-                $store_id,
-                $user['id']
-            ]);
-
-            header("Location: ../../index.php?link=management");
-            exit;
-        }
-    }
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'store_owner') {
+    die('no permission');
 }
-?>
 
-<div class="container mt-4">
-    <h4>➕ เพิ่มพนักงาน</h4>
+$store_id = $_POST['store_id'] ?? null;
+$email    = trim($_POST['email']);
+$phone    = trim($_POST['phone']);
 
-    <?php if (!empty($error)): ?>
-        <div class="alert alert-danger"><?= $error ?></div>
-    <?php endif; ?>
+if (!$store_id || !$email || !$phone) {
+    die('ข้อมูลไม่ครบ');
+}
 
-    <form method="post">
-        <div class="mb-3">
-            <label>Email พนักงาน</label>
-            <input type="email" name="email" class="form-control" required>
-        </div>
+/* === หา user เดิม === */
+$stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+$stmt->execute([$email]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        <button class="btn btn-primary">บันทึก</button>
-        <a href="../../index.php?link=management" class="btn btn-secondary">ยกเลิก</a>
-    </form>
-</div>
+if ($user) {
+    $user_id = $user['id'];
+} else {
+    // สร้าง user ใหม่
+    $stmt = $pdo->query("SELECT UUID()");
+    $user_id = $stmt->fetchColumn();
+
+    $stmt = $pdo->prepare("
+        INSERT INTO users (id, email, phone, role, status)
+        VALUES (?, ?, ?, 'staff', 'active')
+    ");
+    $stmt->execute([$user_id, $email, $phone]);
+}
+
+/* === ผูกเข้าร้าน === */
+$stmt = $pdo->prepare("
+    INSERT INTO store_staff (id, store_id, user_id, role)
+    VALUES (UUID(), ?, ?, 'staff')
+");
+$stmt->execute([$store_id, $user_id]);
+
+header("Location: ../../index.php?link=management");
+exit;

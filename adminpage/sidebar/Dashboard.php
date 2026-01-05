@@ -1,38 +1,50 @@
 <?php
 
-$total_stores = $conn->query("SELECT COUNT(*) AS num FROM stores")
-    ->fetch_assoc()['num'];
+/* ---------- จำนวนร้านทั้งหมด ---------- */
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM stores");
+$stmt->execute();
+$total_stores = $stmt->fetchColumn();
 
-// ร้านที่ Active
-$active_stores = $conn->query("SELECT COUNT(*) AS num FROM stores WHERE status='active'")
-    ->fetch_assoc()['num'];
+/* ---------- ร้านที่ active ---------- */
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM stores WHERE status = 'active'");
+$stmt->execute();
+$active_stores = $stmt->fetchColumn();
 
-// ร้านค้างจ่าย (subscription ไม่ active)
-$overdue_stores = $conn->query("
-    SELECT COUNT(*) AS num 
+/* ---------- ร้านค้างจ่าย ---------- */
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) 
     FROM store_subscriptions 
     WHERE status != 'active'
-")->fetch_assoc()['num'];
+");
+$stmt->execute();
+$overdue_stores = $stmt->fetchColumn();
 
-// รายได้เดือนปัจจุบัน
-$monthly_revenue = $conn->query("
-    SELECT IFNULL(SUM(amount),0) AS total 
-    FROM payments 
-    WHERE status='success' 
-    AND MONTH(paid_at)=MONTH(CURDATE()) 
-    AND YEAR(paid_at)=YEAR(CURDATE())
-")->fetch_assoc()['total'];
-$overdue_list = $conn->query("
-    SELECT s.name AS store_name, 
-           ss.plan, 
-           ss.monthly_fee, 
-           ss.start_date
+/* ---------- รายได้เดือนปัจจุบัน ---------- */
+$stmt = $pdo->prepare("
+    SELECT IFNULL(SUM(amount),0)
+    FROM payments
+    WHERE status = 'success'
+      AND MONTH(paid_at) = MONTH(CURDATE())
+      AND YEAR(paid_at) = YEAR(CURDATE())
+");
+$stmt->execute();
+$monthly_revenue = $stmt->fetchColumn();
+
+/* ---------- รายการร้านค้างจ่าย ---------- */
+$stmt = $pdo->prepare("
+    SELECT 
+        s.name AS store_name, 
+        ss.plan, 
+        ss.monthly_fee, 
+        ss.start_date
     FROM store_subscriptions ss
     JOIN stores s ON ss.store_id = s.id
     WHERE ss.status != 'active'
     ORDER BY ss.start_date ASC
     LIMIT 5
 ");
+$stmt->execute();
+$overdue_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 <?php
@@ -103,7 +115,7 @@ $overdue_list = $conn->query("
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = $overdue_list->fetch_assoc()) { ?>
+                <?php foreach ($overdue_list as $row) { ?>
                     <tr>
                         <td><?= $row['store_name'] ?></td>
                         <td><?= $row['plan'] ?></td>

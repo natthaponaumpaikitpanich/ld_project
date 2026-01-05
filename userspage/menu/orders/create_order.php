@@ -190,9 +190,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if ($success): ?>
                     <div class="alert alert-success text-center">
                         <h5 class="mb-2">🎉 สร้างคำสั่งซักสำเร็จ</h5>
-                        <a href="my_orders.php" class="btn btn-success mt-2">
-                            ดูสถานะงานของฉัน
-                        </a>
                     </div>
                 <?php endif; ?>
 

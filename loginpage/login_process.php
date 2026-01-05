@@ -1,10 +1,9 @@
 <?php
 session_start();
-require_once "../ld_db.php"; // mysqli => $conn
+require_once "../ld_db.php"; // PDO => $pdo
 
 $email    = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
-$phone    = $_POST['phone'] ?? '';
 
 // --------------------
 // 1) หา user
@@ -15,12 +14,9 @@ $sql = "
     WHERE email = ?
     LIMIT 1
 ";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$email]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
     $_SESSION['error'] = "ไม่พบผู้ใช้งาน";
@@ -29,7 +25,7 @@ if (!$user) {
 }
 
 // --------------------
-// 2) ตรวจรหัสผ่าน (bcrypt)
+// 2) ตรวจรหัสผ่าน
 // --------------------
 if (!password_verify($password, $user['password_hash'])) {
     $_SESSION['error'] = "รหัสผ่านไม่ถูกต้อง";
@@ -55,16 +51,14 @@ switch ($user['role']) {
 
     case 'store_owner':
 
-        $sql = "
+        $stmt = $pdo->prepare("
             SELECT id, name
             FROM stores
             WHERE owner_id = ?
             LIMIT 1
-        ";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $user['id']);
-        $stmt->execute();
-        $store = $stmt->get_result()->fetch_assoc();
+        ");
+        $stmt->execute([$user['id']]);
+        $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$store) {
             $_SESSION['error'] = "ยังไม่มีร้านในระบบ";
@@ -80,17 +74,15 @@ switch ($user['role']) {
 
     case 'staff':
 
-        $sql = "
+        $stmt = $pdo->prepare("
             SELECT s.id, s.name
             FROM store_staff ss
             JOIN stores s ON ss.store_id = s.id
             WHERE ss.user_id = ?
             LIMIT 1
-        ";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $user['id']);
-        $stmt->execute();
-        $store = $stmt->get_result()->fetch_assoc();
+        ");
+        $stmt->execute([$user['id']]);
+        $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$store) {
             $_SESSION['error'] = "บัญชีพนักงานยังไม่ผูกกับร้าน";
