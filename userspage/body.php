@@ -11,13 +11,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $unpaidOrder = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($unpaidOrder) {
-    // ถ้ายังไม่ได้อยู่หน้าชำระเงิน → เด้ง
-    if (!str_contains($_SERVER['REQUEST_URI'], 'menu/payment_promptpay.php')) {
-        header("Location: menu/payment_promptpay.php?id=".$unpaidOrder['id']);
-        exit;
-    }
-}
  ?>
 <?php
 if (isset($_GET['link'])) {

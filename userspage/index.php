@@ -15,13 +15,18 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $unpaidOrder = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($unpaidOrder) {
-    // ถ้ายังไม่ได้อยู่หน้าชำระเงิน → เด้ง
-    if (!str_contains($_SERVER['REQUEST_URI'], 'payment_promptpay.php')) {
-        header("Location: menu/payment_promptpay.php?id=".$unpaidOrder['id']);
-        exit;
-    }
-}
+$stmt = $pdo->prepare("
+    SELECT o.id
+    FROM orders o
+    LEFT JOIN payments p 
+        ON p.order_id = o.id 
+        AND p.status = 'pending'
+    WHERE o.customer_id = ?
+      AND o.payment_status = 'pending'
+      AND p.id IS NULL
+    LIMIT 1
+");
+$stmt->execute([$_SESSION['user_id']]);
 
 
 
@@ -71,6 +76,7 @@ $user = $stmtUser->fetch();
 <html lang="th">
 
 <head>
+
     <meta charset="UTF-8">
     <title>หน้าหลักลูกค้า</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">

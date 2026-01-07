@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
-    header("Location: ../loginpage/login.php");
+    header("Location: ../../../loginpage/login.php");
     exit;
 }
 
