@@ -3,11 +3,9 @@ session_start();
 require_once "../../../ld_db.php";
 
 $store_id = $_SESSION['store_id'] ?? null;
-$order_id = $_POST['order_id'] ?? null;
-$pickup_address = $_POST['pickup_address'] ?? null;
-$scheduled_at = $_POST['scheduled_at'] ?? null;
+$order_id = $_GET['order_id'] ?? null;
 
-if (!$store_id || !$order_id || !$pickup_address) {
+if (!$store_id || !$order_id) {
     die("ข้อมูลไม่ครบ");
 }
 
@@ -23,17 +21,23 @@ if (!$stmt->fetch()) {
     die("ออเดอร์ไม่ถูกต้อง");
 }
 
+/* ---------- กันสร้าง pickup ซ้ำ ---------- */
+$check = $pdo->prepare("
+    SELECT id FROM pickups WHERE order_id = ?
+");
+$check->execute([$order_id]);
+
+if ($check->fetch()) {
+    die("ออเดอร์นี้มีงานจัดส่งแล้ว");
+}
+
 /* ---------- สร้างงานจัดส่ง ---------- */
 $stmt = $pdo->prepare("
     INSERT INTO pickups
     (id, order_id, pickup_address, scheduled_at, status)
-    VALUES (UUID(), ?, ?, ?, 'scheduled')
+    VALUES (UUID(), ?, 'ที่อยู่จากลูกค้า', NULL, 'scheduled')
 ");
-$stmt->execute([
-    $order_id,
-    $pickup_address,
-    $scheduled_at
-]);
+$stmt->execute([$order_id]);
 
 /* ---------- อัปเดตสถานะ Order ---------- */
 $stmt = $pdo->prepare("
@@ -43,5 +47,5 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$order_id]);
 
-header("Location: order_view.php?id=" . $order_id);
+header("Location: ../../index.php?link=delivery");
 exit;

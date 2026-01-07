@@ -1,7 +1,9 @@
 <?php
 session_start();
 require_once "../../../ld_db.php";
-
+if ($_SESSION['role'] !== 'store_owner') {
+    die('no permission');
+}
 $store_id = $_SESSION['store_id'] ?? null;
 $id = $_GET['id'] ?? null;
 

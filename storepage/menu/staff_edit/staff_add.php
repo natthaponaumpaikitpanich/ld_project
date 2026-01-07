@@ -6,12 +6,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'store_owner') {
     die('no permission');
 }
 
-$store_id = $_POST['store_id'] ?? null;
-$email    = trim($_POST['email']);
-$phone    = trim($_POST['phone']);
+$store_id = $_SESSION['store_id'] ?? null;
+$email    = trim($_POST['email'] ?? '');
+$phone    = trim($_POST['phone'] ?? '');
 
 if (!$store_id || !$email || !$phone) {
     die('ข้อมูลไม่ครบ');
+}
+
+/* === ตรวจว่าร้านเป็นของ owner คนนี้จริง === */
+$chk = $pdo->prepare("
+    SELECT id FROM stores
+    WHERE id=? AND owner_id=?
+");
+$chk->execute([$store_id, $_SESSION['user_id']]);
+if (!$chk->fetch()) {
+    die('no permission');
 }
 
 /* === หา user เดิม === */
@@ -31,6 +41,17 @@ if ($user) {
         VALUES (?, ?, ?, 'staff', 'active')
     ");
     $stmt->execute([$user_id, $email, $phone]);
+}
+
+/* === กัน staff ซ้ำในร้านเดียวกัน === */
+$chk = $pdo->prepare("
+    SELECT id FROM store_staff
+    WHERE store_id=? AND user_id=?
+");
+$chk->execute([$store_id, $user_id]);
+if ($chk->fetch()) {
+    header("Location: ../../index.php?link=management&error=duplicate");
+    exit;
 }
 
 /* === ผูกเข้าร้าน === */

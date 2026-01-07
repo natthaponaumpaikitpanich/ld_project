@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['store_owner',
 $user_id = $_SESSION['user_id'];
 
 $stmt = $pdo->prepare("
-    SELECT 
+    SELECT DISTINCT
         o.id,
         o.order_number,
         o.status,

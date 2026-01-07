@@ -18,7 +18,10 @@ $stmt = $pdo->prepare("
     JOIN users u ON ss.user_id = u.id
     WHERE ss.store_id = ?
       AND ss.role != 'store_owner'
+    ORDER BY ss.created_at DESC
 ");
+$stmt->execute([$store_id]);
+$staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 function staff_image($img){
     if ($img) {
@@ -29,9 +32,6 @@ function staff_image($img){
     }
     return '/ld_project/assets/img/user.png';
 }
-
-$stmt->execute([$store_id]);
-$staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container mt-4">
@@ -43,8 +43,6 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         data-bs-target="#addStaffModal">
     ➕ เพิ่มพนักงาน
 </button>
-
-
 
 <div class="card shadow-sm border-0">
 <div class="card-body p-0">
@@ -90,13 +88,10 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </td>
 
-<td>
-    <?= htmlspecialchars($s['phone']) ?>
-</td>
+<td><?= htmlspecialchars($s['phone']) ?></td>
 
 <td>
-    <span class="badge rounded-pill
-        bg-<?= $s['role']==='store_owner'?'success':'info' ?>">
+    <span class="badge rounded-pill bg-info">
         <?= strtoupper($s['role']) ?>
     </span>
 </td>
@@ -106,13 +101,11 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </td>
 
 <td class="text-end">
-<?php if ($s['role'] !== 'store_owner'): ?>
     <a href="menu/staff_edit/staff_delete.php?id=<?= $s['staff_id'] ?>"
        class="btn btn-sm btn-outline-danger"
        onclick="return confirm('ลบพนักงานคนนี้?')">
        ลบ
     </a>
-<?php endif; ?>
 </td>
 
 </tr>
@@ -124,6 +117,7 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 </div>
 </div>
+
 <!-- ===== Add Staff Modal ===== -->
 <div class="modal fade" id="addStaffModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -144,7 +138,6 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <input type="email"
                    name="email"
                    class="form-control"
-                   placeholder="staff@email.com"
                    required>
           </div>
 
@@ -153,13 +146,8 @@ $staffs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <input type="text"
                    name="phone"
                    class="form-control"
-                   placeholder="08xxxxxxxx"
                    required>
           </div>
-
-          <input type="hidden"
-                 name="store_id"
-                 value="<?= htmlspecialchars($store_id) ?>">
 
         </div>
 

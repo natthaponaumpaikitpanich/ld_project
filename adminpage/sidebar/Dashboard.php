@@ -20,15 +20,18 @@ $stmt->execute();
 $overdue_stores = $stmt->fetchColumn();
 
 /* ---------- รายได้เดือนปัจจุบัน ---------- */
+/* ---------- รายได้เดือนปัจจุบัน ---------- */
 $stmt = $pdo->prepare("
-    SELECT IFNULL(SUM(amount),0)
+    SELECT IFNULL(SUM(amount), 0)
     FROM payments
-    WHERE status = 'success'
+    WHERE status = 'confirmed'
+      AND paid_at IS NOT NULL
       AND MONTH(paid_at) = MONTH(CURDATE())
       AND YEAR(paid_at) = YEAR(CURDATE())
 ");
 $stmt->execute();
 $monthly_revenue = $stmt->fetchColumn();
+
 
 /* ---------- รายการร้านค้างจ่าย ---------- */
 $stmt = $pdo->prepare("

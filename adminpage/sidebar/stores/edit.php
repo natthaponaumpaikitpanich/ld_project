@@ -1,6 +1,6 @@
 <?php
-include_once '../../assets/style.php';
-
+include_once "../../assets/style.php";
+include_once '../../../ld_db.php';
 
 $id = $_GET['id'] ?? null;
 if (!$id) exit;
@@ -42,5 +42,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </select>
 
     <button class="btn btn-success">บันทึก</button>
-    <a href="../sidebar.php?link=Dashboard" class="btn btn-primary">กลับไปหน้าหลัก</a>
+    <a href="../sidebar.php?link=allstore" class="btn btn-primary">กลับไปหน้าหลัก</a>
 </form>

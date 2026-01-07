@@ -1,11 +1,8 @@
 <?php
-
-
+$user_id = $_SESSION['user_id'];
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'store_owner') {
     die("ไม่มีสิทธิ์เข้าถึง");
 }
-
-$user_id = $_SESSION['user_id'];
 
 /* ================= UPDATE PROFILE + QR ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
@@ -36,25 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $new_profile_image = 'uploads/profile/'.$filename;
     }
 
-    /* ---------- upload promptpay qr ---------- */
-    $new_qr = null;
-    if (!empty($_FILES['promptpay_qr']['name'])) {
-        $allowed = ['image/jpeg','image/png'];
-        if (!in_array($_FILES['promptpay_qr']['type'], $allowed)) {
-            die('QR ต้องเป็น JPG / PNG');
-        }
-
-        $ext = pathinfo($_FILES['promptpay_qr']['name'], PATHINFO_EXTENSION);
-        $filename = uniqid().'_promptpay.'.$ext;
-
-        $dir = $_SERVER['DOCUMENT_ROOT'].'/ld_project/uploads/promptpay/';
-        if (!is_dir($dir)) mkdir($dir,0777,true);
-
-        move_uploaded_file($_FILES['promptpay_qr']['tmp_name'], $dir.$filename);
-        $new_qr = 'uploads/promptpay/'.$filename;
-    }
-
-    /* ---------- update users ---------- */
     if ($new_profile_image) {
         $stmt = $pdo->prepare("
             UPDATE users
@@ -71,21 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $stmt->execute([$display_name,$email,$phone,$user_id]);
     }
 
-    /* ---------- update store qr ---------- */
-    if ($new_qr) {
-        $stmt = $pdo->prepare("
-            UPDATE stores s
-            JOIN store_staff ss ON ss.store_id = s.id
-            SET s.promptpay_qr = ?
-            WHERE ss.user_id = ?
-        ");
-        $stmt->execute([$new_qr,$user_id]);
-    }
-
-    header("Location: profile.php");
     exit;
 }
-
 /* ================= FETCH PROFILE + STORE ================= */
 $stmt = $pdo->prepare("
     SELECT 
@@ -117,7 +82,6 @@ function img($path,$fallback){
 }
 
 $profile_img = img($profile['profile_image'],'/ld_project/assets/img/user.png');
-$qr_img      = img($profile['promptpay_qr'],null);
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -159,19 +123,12 @@ body{background:#f4f6f9}
     <hr>
     <h6 class="fw-bold">🏪 ร้าน</h6>
     <p><?= htmlspecialchars($profile['store_name']) ?></p>
-
-    <h6 class="fw-bold mt-3">💳 QR PromptPay</h6>
-    <?php if ($qr_img): ?>
-        <img src="<?= $qr_img ?>" class="img-thumbnail" style="max-width:200px">
-    <?php else: ?>
-        <div class="text-muted">ยังไม่ได้ตั้งค่า QR</div>
-    <?php endif; ?>
 </div>
 </div>
 </div>
 
 <!-- EDIT -->
-<form id="editMode" method="post" enctype="multipart/form-data" style="display:none">
+<form id="editMode" method="post" action="menu/profile/profile_action.php" enctype="multipart/form-data" style="display:none">
 <input type="hidden" name="update_profile" value="1">
 
 <div class="row g-4">
@@ -188,9 +145,6 @@ body{background:#f4f6f9}
            value="<?= htmlspecialchars($profile['email']) ?>" required>
     <input name="phone" class="form-control mb-3"
            value="<?= htmlspecialchars($profile['phone']) ?>" required>
-
-    <label class="fw-semibold">💳 QR PromptPay ร้าน</label>
-    <input type="file" name="promptpay_qr" class="form-control mb-3">
 
     <button class="btn btn-primary">💾 บันทึก</button>
     <button type="button" onclick="cancelEdit()" class="btn btn-secondary">ยกเลิก</button>

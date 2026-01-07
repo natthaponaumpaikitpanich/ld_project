@@ -7,28 +7,28 @@ if (!$store_id) {
 
 /* ---------- รายได้วันนี้ ---------- */
 $stmt = $pdo->prepare("
-    SELECT SUM(p.amount) 
+    SELECT IFNULL(SUM(p.amount),0)
     FROM payments p
     JOIN orders o ON p.order_id = o.id
-    WHERE p.status = 'success'
+    WHERE p.status = 'confirmed'
       AND o.store_id = ?
-      AND DATE(p.paid_at) = CURDATE()
+      AND DATE(p.confirmed_at) = CURDATE()
 ");
 $stmt->execute([$store_id]);
-$today_income = $stmt->fetchColumn() ?? 0;
+$today_income = $stmt->fetchColumn();
 
 /* ---------- รายได้เดือนนี้ ---------- */
 $stmt = $pdo->prepare("
-    SELECT SUM(p.amount)
+    SELECT IFNULL(SUM(p.amount),0)
     FROM payments p
     JOIN orders o ON p.order_id = o.id
-    WHERE p.status = 'success'
+    WHERE p.status = 'confirmed'
       AND o.store_id = ?
-      AND MONTH(p.paid_at) = MONTH(CURDATE())
-      AND YEAR(p.paid_at) = YEAR(CURDATE())
+      AND MONTH(p.confirmed_at) = MONTH(CURDATE())
+      AND YEAR(p.confirmed_at) = YEAR(CURDATE())
 ");
 $stmt->execute([$store_id]);
-$month_income = $stmt->fetchColumn() ?? 0;
+$month_income = $stmt->fetchColumn();
 
 /* ---------- รายการชำระเงิน ---------- */
 $stmt = $pdo->prepare("
@@ -36,12 +36,13 @@ $stmt = $pdo->prepare("
         p.amount,
         p.provider,
         p.status,
-        p.paid_at,
+        p.confirmed_at,
         o.order_number
     FROM payments p
     JOIN orders o ON p.order_id = o.id
     WHERE o.store_id = ?
-    ORDER BY p.paid_at DESC
+      AND p.status = 'confirmed'
+    ORDER BY p.confirmed_at DESC
 ");
 $stmt->execute([$store_id]);
 $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -86,27 +87,31 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($payments as $p): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($p['order_number']) ?></td>
-                        <td><?= number_format($p['amount'], 2) ?> ฿</td>
-                        <td><?= $p['provider'] ?></td>
-                        <td>
-                            <span class="badge bg-success">
-                                <?= $p['status'] ?>
-                            </span>
-                        </td>
-                        <td><?= date('d/m/Y H:i', strtotime($p['paid_at'])) ?></td>
-                    </tr>
-                    <?php endforeach; ?>
 
-                    <?php if (empty($payments)): ?>
+                <?php if (empty($payments)): ?>
                     <tr>
                         <td colspan="5" class="text-center text-muted">
                             ยังไม่มีการชำระเงิน
                         </td>
                     </tr>
-                    <?php endif; ?>
+                <?php else: ?>
+                    <?php foreach ($payments as $p): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($p['order_number']) ?></td>
+                        <td><?= number_format($p['amount'], 2) ?> ฿</td>
+                        <td><?= htmlspecialchars($p['provider']) ?></td>
+                        <td>
+                            <span class="badge bg-success">
+                                รับเงินแล้ว
+                            </span>
+                        </td>
+                        <td>
+                            <?= date('d/m/Y H:i', strtotime($p['confirmed_at'])) ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+
                 </tbody>
             </table>
         </div>

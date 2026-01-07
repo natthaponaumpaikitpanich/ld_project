@@ -1,14 +1,16 @@
 <?php
-require_once __DIR__ . "../../../../ld_db.php";
+require_once __DIR__ . "/../../../../ld_db.php";
 
 // filter
 $filter = $_GET['filter'] ?? 'all';
 
 $where = '';
 if ($filter === 'today') {
-    $where = "WHERE DATE(pay.paid_at) = CURDATE()";
+    $where = "WHERE pay.paid_at IS NOT NULL
+              AND DATE(pay.paid_at) = CURDATE()";
 } elseif ($filter === 'month') {
-    $where = "WHERE MONTH(pay.paid_at)=MONTH(CURDATE())
+    $where = "WHERE pay.paid_at IS NOT NULL
+              AND MONTH(pay.paid_at)=MONTH(CURDATE())
               AND YEAR(pay.paid_at)=YEAR(CURDATE())";
 }
 

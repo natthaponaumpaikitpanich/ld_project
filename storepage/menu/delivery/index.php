@@ -14,9 +14,15 @@ SELECT
     p.id AS pickup_id,
     p.status AS pickup_status,
     p.scheduled_at
-
 FROM orders o
-LEFT JOIN pickups p ON p.order_id = o.id
+LEFT JOIN pickups p 
+  ON p.id = (
+      SELECT id 
+      FROM pickups 
+      WHERE order_id = o.id 
+      ORDER BY created_at DESC 
+      LIMIT 1
+  )
 WHERE o.store_id = ?
 ORDER BY o.created_at DESC
 ";
@@ -31,7 +37,6 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>การจัดส่ง</title>
-
 </head>
 
 <body>
@@ -66,7 +71,6 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($orders as $i => $o): ?>
                     <tr>
                         <td><?= $i + 1 ?></td>
-
                         <td><?= htmlspecialchars($o['order_number']) ?></td>
 
                         <td>
@@ -95,7 +99,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <td>
                             <?php if (!$o['pickup_id']): ?>
-                                <a href="delivery_create.php?order_id=<?= $o['order_id'] ?>"
+                                <a href="menu/delivery/delivery_create.php?order_id=<?= $o['order_id'] ?>"
                                    class="btn btn-sm btn-primary">
                                    สร้างงานจัดส่ง
                                 </a>

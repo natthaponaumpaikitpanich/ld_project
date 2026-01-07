@@ -3,20 +3,21 @@ $sql = "
 SELECT
     s.id AS store_id,
     s.name AS store_name,
-    p.name AS plan_name,
-    p.price,
-    s.billing_start,
-    s.billing_end,
-    DATEDIFF(CURDATE(), s.billing_end) AS overdue_days
-FROM stores s
-LEFT JOIN billing_plans p ON s.billing_plan_id = p.id
-WHERE s.billing_end < CURDATE()
-AND s.status = 'active'
+    ss.plan AS plan_name,
+    ss.monthly_fee AS price,
+    ss.end_date AS billing_end,
+    DATEDIFF(CURDATE(), ss.end_date) AS overdue_days
+FROM store_subscriptions ss
+JOIN stores s ON ss.store_id = s.id
+WHERE ss.status != 'active'
+  AND ss.end_date < CURDATE()
+  AND s.status = 'active'
 ORDER BY overdue_days DESC
 ";
 
 $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-?>  
+?>
+
 <div class="card shadow">
     <div class="card-body">
 
@@ -45,12 +46,12 @@ $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 <?php foreach ($rows as $r): ?>
                     <tr>
                         <td><?= htmlspecialchars($r['store_name']) ?></td>
-                        <td><?= $r['plan_name'] ?? '-' ?></td>
-                        <td><?= number_format($r['price'] ?? 0, 2) ?> ฿</td>
+                        <td><?= htmlspecialchars($r['plan_name'] ?? '-') ?></td>
+                        <td><?= number_format($r['price'], 2) ?> ฿</td>
                         <td><?= date('d/m/Y', strtotime($r['billing_end'])) ?></td>
                         <td>
                             <span class="badge bg-danger">
-                                <?= $r['overdue_days'] ?> วัน
+                                <?= (int)$r['overdue_days'] ?> วัน
                             </span>
                         </td>
                         <td>
@@ -71,4 +72,3 @@ $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
     </div>
 </div>
-

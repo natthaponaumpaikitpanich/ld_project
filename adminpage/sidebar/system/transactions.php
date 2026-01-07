@@ -1,16 +1,16 @@
 <?php
-// system/transactions.php
-
-
 $filter = $_GET['filter'] ?? 'all';
 
 $where = '';
 if ($filter === 'today') {
-    $where = "WHERE DATE(pay.paid_at) = CURDATE()";
+    $where = "WHERE pay.paid_at IS NOT NULL
+              AND DATE(pay.paid_at) = CURDATE()";
 } elseif ($filter === 'month') {
-    $where = "WHERE MONTH(pay.paid_at) = MONTH(CURDATE())
+    $where = "WHERE pay.paid_at IS NOT NULL
+              AND MONTH(pay.paid_at) = MONTH(CURDATE())
               AND YEAR(pay.paid_at) = YEAR(CURDATE())";
 }
+
 $sql = "
 SELECT
     pay.id AS payment_id,
@@ -28,6 +28,7 @@ ORDER BY pay.paid_at DESC
 ";
 
 $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
 $summarySql = "
 SELECT
     COUNT(pay.id) AS total_txn,
@@ -46,54 +47,47 @@ $summary = $pdo->query($summarySql)->fetch(PDO::FETCH_ASSOC);
 
 <div class="container mt-4">
     <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card shadow text-center">
-            <div class="card-body">
-                <h6 class="text-muted">ยอดเงินรวม</h6>
-                <h4 class="fw-bold text-success">
-                    <?= number_format($summary['total_amount'] ?? 0, 2) ?> ฿
-                </h4>
+        <div class="col-md-3">
+            <div class="card shadow text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">ยอดเงินรวม</h6>
+                    <h4 class="fw-bold text-success">
+                        <?= number_format($summary['total_amount'] ?? 0, 2) ?> ฿
+                    </h4>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card shadow text-center">
-            <div class="card-body">
-                <h6 class="text-muted">ธุรกรรมทั้งหมด</h6>
-                <h4 class="fw-bold">
-                    <?= $summary['total_txn'] ?? 0 ?>
-                </h4>
+        <div class="col-md-3">
+            <div class="card shadow text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">ธุรกรรมทั้งหมด</h6>
+                    <h4 class="fw-bold"><?= $summary['total_txn'] ?? 0 ?></h4>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card shadow text-center">
-            <div class="card-body">
-                <h6 class="text-muted">สำเร็จ</h6>
-                <h4 class="fw-bold text-primary">
-                    <?= $summary['success_txn'] ?? 0 ?>
-                </h4>
+        <div class="col-md-3">
+            <div class="card shadow text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">สำเร็จ</h6>
+                    <h4 class="fw-bold text-primary"><?= $summary['success_txn'] ?? 0 ?></h4>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-3">
-        <div class="card shadow text-center">
-            <div class="card-body">
-                <h6 class="text-muted">ไม่สำเร็จ</h6>
-                <h4 class="fw-bold text-danger">
-                    <?= $summary['failed_txn'] ?? 0 ?>
-                </h4>
+        <div class="col-md-3">
+            <div class="card shadow text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">ไม่สำเร็จ</h6>
+                    <h4 class="fw-bold text-danger"><?= $summary['failed_txn'] ?? 0 ?></h4>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <h3 class="mb-3">📑 รายงานธุรกรรม</h3>
 
-    <!-- FILTER -->
     <div class="mb-3 d-flex gap-3">
         <a href="sidebar.php?link=transactions&filter=all"
            class="btn btn-outline-secondary <?= $filter=='all'?'active':'' ?>">
@@ -136,31 +130,30 @@ $summary = $pdo->query($summarySql)->fetch(PDO::FETCH_ASSOC);
                     </tr>
                 <?php else: ?>
                     <?php foreach ($rows as $i => $r): ?>
-                    <tr>
-                        <td><?= $i+1 ?></td>
-                        <td><?= htmlspecialchars($r['store_name'] ?? '-') ?></td>
-                        <td><?= htmlspecialchars($r['order_number'] ?? '-') ?></td>
-                        <td><?= number_format($r['amount'], 2) ?> ฿</td>
-                        <td><?= htmlspecialchars($r['provider']) ?></td>
-                        <td>
-                            <span class="badge bg-<?= $r['status']=='success'?'success':'danger' ?>">
-                                <?= $r['status']=='success'?'สำเร็จ':'ไม่สำเร็จ' ?>
-                            </span>
-                        </td>
-                        <td><?= date('d/m/Y H:i', strtotime($r['paid_at'])) ?></td>
-                    </tr>
+                        <tr>
+                            <td><?= $i+1 ?></td>
+                            <td><?= htmlspecialchars($r['store_name'] ?? '-') ?></td>
+                            <td><?= htmlspecialchars($r['order_number'] ?? '-') ?></td>
+                            <td><?= number_format($r['amount'], 2) ?> ฿</td>
+                            <td><?= htmlspecialchars($r['provider']) ?></td>
+                            <td>
+                                <span class="badge bg-<?= $r['status']=='success'?'success':'danger' ?>">
+                                    <?= $r['status']=='success'?'สำเร็จ':'ไม่สำเร็จ' ?>
+                                </span>
+                            </td>
+                            <td><?= date('d/m/Y H:i', strtotime($r['paid_at'])) ?></td>
+                        </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
-                <div class="mb-3 d-flex gap-3 align-items-center">
-    <!-- EXPORT -->
-    <a href="system/transactions_export.php?filter=<?= $filter ?>"
-       class="btn btn-success ms-auto bi bi-file-earmark-excel-fill">
-       Export
-    </a>
-</div>
                 </tbody>
-
             </table>
+
+            <div class="mt-3 d-flex">
+                <a href="system/transactions_export.php?filter=<?= $filter ?>"
+                   class="btn btn-success ms-auto bi bi-file-earmark-excel-fill">
+                   Export
+                </a>
+            </div>
 
         </div>
     </div>
