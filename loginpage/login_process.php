@@ -1,20 +1,17 @@
 <?php
 session_start();
-require_once "../ld_db.php"; // PDO => $pdo
+require_once "../ld_db.php";
 
 $email    = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
-// --------------------
-// 1) หา user
-// --------------------
-$sql = "
-    SELECT id, email, phone, password_hash, display_name, role
+/* ================= หา user ================= */
+$stmt = $pdo->prepare("
+    SELECT id, email, password_hash, display_name, role
     FROM users
     WHERE email = ?
     LIMIT 1
-";
-$stmt = $pdo->prepare($sql);
+");
 $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -24,25 +21,19 @@ if (!$user) {
     exit;
 }
 
-// --------------------
-// 2) ตรวจรหัสผ่าน
-// --------------------
+/* ================= ตรวจรหัสผ่าน ================= */
 if (!password_verify($password, $user['password_hash'])) {
     $_SESSION['error'] = "รหัสผ่านไม่ถูกต้อง";
     header("Location: login.php");
     exit;
 }
 
-// --------------------
-// 3) set session กลาง
-// --------------------
+/* ================= session กลาง ================= */
 $_SESSION['user_id']   = $user['id'];
 $_SESSION['role']      = $user['role'];
 $_SESSION['user_name'] = $user['display_name'];
 
-// --------------------
-// 4) redirect ตาม role
-// --------------------
+/* ================= redirect ตาม role ================= */
 switch ($user['role']) {
 
     case 'platform_admin':
@@ -61,8 +52,8 @@ switch ($user['role']) {
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$store) {
-            $_SESSION['error'] = "ยังไม่มีร้านในระบบ";
-            header("Location: login.php");
+            // 🔥 แก้ตรงนี้
+            header("Location: ../storepage/create_store.php");
             exit;
         }
 
@@ -96,7 +87,6 @@ switch ($user['role']) {
         header("Location: ../staffpage/index.php?link=Home");
         exit;
 
-    case 'customer':
     default:
         header("Location: ../userspage/index.php");
         exit;

@@ -6,9 +6,9 @@ require_once "../ld_db.php";
 include "middleware_subscription.php";
 
 /* ================= BASIC AUTH ================= */
-$store_id = $_SESSION['store_id'] ?? null;
-if (!$store_id) {
-    die("ไม่พบร้าน");
+if (!isset($_SESSION['store_id'])) {
+    header("Location: create_store.php");
+    exit;
 }
 
 /* ================= PROMOTIONS (จากแอดมิน) ================= */
