@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . "../../../ld_db.php";
-require_once 'auth_store.php';
+
 
 /* ---------- ออเดอร์วันนี้ ---------- */
 $stmt = $pdo->prepare("

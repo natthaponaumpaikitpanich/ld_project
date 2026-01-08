@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../../../../ld_db.php";
+require_once __DIR__ . "/../../../ld_db.php";
 
 // filter
 $filter = $_GET['filter'] ?? 'all';

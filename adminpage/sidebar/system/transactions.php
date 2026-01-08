@@ -149,8 +149,8 @@ $summary = $pdo->query($summarySql)->fetch(PDO::FETCH_ASSOC);
             </table>
 
             <div class="mt-3 d-flex">
-                <a href="system/transactions_export.php?filter=<?= $filter ?>"
-                   class="btn btn-success ms-auto bi bi-file-earmark-excel-fill">
+                <a href="system/transactions_export.php?filter=<?= $filter ?> "
+                   class="btn btn-success ms-auto  bi bi-file-earmark-excel-fill">
                    Export
                 </a>
             </div>
