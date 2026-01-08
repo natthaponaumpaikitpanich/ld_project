@@ -1,104 +1,152 @@
 <?php
+require_once "../../ld_db.php";
 
-
-// ดึงแพ็กเกจ (เอาไว้ใช้ที่อื่นได้ ไม่กระทบ)
-$plans = $pdo->query("SELECT * FROM billing_plans WHERE status='active'")
-    ->fetchAll(PDO::FETCH_ASSOC);
-
-// QUERY หลัก
+/*
+|--------------------------------------------------------------------------
+| QUERY: ร้านทั้งหมด + subscription ล่าสุด
+|--------------------------------------------------------------------------
+*/
 $sql = "
-    SELECT
-        s.*,
-        p.name  AS plan_name,
-        p.price AS plan_price
-    FROM stores s
-    LEFT JOIN billing_plans p ON s.billing_plan_id = p.id
-    ORDER BY s.created_at DESC
+SELECT
+    s.id   AS store_id,
+    s.name AS store_name,
+    s.phone,
+    s.address,
+    s.created_at AS store_created,
+
+    ss.id        AS sub_id,
+    ss.plan      AS plan_name,
+    ss.monthly_fee AS plan_price,
+    ss.status    AS sub_status,
+    ss.slip_image,
+    ss.created_at AS sub_created
+
+FROM stores s
+LEFT JOIN store_subscriptions ss
+    ON ss.store_id = s.id
+    AND ss.id = (
+        SELECT ss2.id
+        FROM store_subscriptions ss2
+        WHERE ss2.store_id = s.id
+        ORDER BY ss2.created_at DESC
+        LIMIT 1
+    )
+ORDER BY s.created_at DESC
 ";
 
 $stores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <title>ร้านซักอบรีดทั้งหมด</title>
+<meta charset="utf-8">
+<title>ร้านค้าทั้งหมด</title>
+<link href="/ld_project/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body style="margin-left:260px;">
-
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>ร้านซักอบรีดทั้งหมด</h3>
-    </div>
+<h3 class="fw-bold mb-3">🏪 ร้านซักอบรีดทั้งหมด</h3>
 
-    <div class="card shadow">
-        <div class="card-body">
+<div class="card shadow">
+<div class="card-body p-0">
 
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ชื่อร้าน</th>
-                        <th>เบอร์โทร</th>
-                        <th>ที่อยู่</th>
-                        <th>วันที่สมัคร</th>
-                        <th>สถานะ</th>
-                        <th>แพ็คเกจที่สมัคร</th>
-                        <th width="180">จัดการ</th>
-                    </tr>
-                </thead>
+<table class="table table-striped align-middle mb-0">
+<thead class="table-light">
+<tr>
+    <th>ชื่อร้าน</th>
+    <th>เบอร์</th>
+    <th>วันที่สมัคร</th>
+    <th>แพ็กเกจ</th>
+    <th>สถานะ</th>
+    <th width="220">จัดการ</th>
+</tr>
+</thead>
 
-                <tbody>
-                <?php foreach ($stores as $s): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($s['name']) ?></td>
-                        <td><?= htmlspecialchars($s['phone']) ?></td>
-                        <td><?= nl2br(htmlspecialchars($s['address'])) ?></td>
-                        <td><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
+<tbody>
+<?php if (empty($stores)): ?>
+<tr>
+    <td colspan="6" class="text-center text-muted py-4">
+        ยังไม่มีร้าน
+    </td>
+</tr>
+<?php endif; ?>
 
-                        <td>
-                            <?php if ($s['status'] === 'active'): ?>
-                                <span class="badge bg-success">Active</span>
-                            <?php elseif ($s['status'] === 'pending'): ?>
-                                <span class="badge bg-warning">Pending</span>
-                            <?php endif; ?>
-                        </td>
+<?php foreach ($stores as $s): ?>
+<tr>
 
-                        <td>
-                            <?php if ($s['plan_name']): ?>
-                                <span class="badge bg-primary">
-                                    <?= htmlspecialchars($s['plan_name']) ?>
-                                </span><br>
-                                <small class="text-muted">
-                                    <?= number_format($s['plan_price'], 2) ?> ฿ / เดือน
-                                </small>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">ไม่เลือกแพ็กเกจ</span>
-                            <?php endif; ?>
-                        </td>
+<td>
+    <div class="fw-semibold"><?= htmlspecialchars($s['store_name']) ?></div>
+    <small class="text-muted"><?= nl2br(htmlspecialchars($s['address'])) ?></small>
+</td>
 
-                        <td>
-                            <a href="stores/edit.php?id=<?= $s['id'] ?>"
-                               class="btn btn-warning btn-sm">แก้ไข</a>
+<td><?= htmlspecialchars($s['phone']) ?></td>
 
-                           <a href="stores/delete.php?id=<?= $s['id'] ?>"
-   class="btn btn-danger btn-sm"
-   onclick="return confirm('ยืนยันลบร้านนี้?')">
-   ลบ
-</a>
+<td><?= date('d/m/Y', strtotime($s['store_created'])) ?></td>
 
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
+<td>
+<?php if ($s['plan_name']): ?>
+    <span class="badge bg-primary">
+        <?= htmlspecialchars($s['plan_name']) ?>
+    </span><br>
+    <small class="text-muted">
+        <?= number_format($s['plan_price'],2) ?> ฿
+    </small>
+<?php else: ?>
+    <span class="badge bg-secondary">ยังไม่สมัคร</span>
+<?php endif; ?>
+</td>
 
-            </table>
+<td>
+<?php
+    echo match($s['sub_status']) {
+        'waiting_approve' => '<span class="badge bg-warning">รออนุมัติ</span>',
+        'active'          => '<span class="badge bg-success">ใช้งานได้</span>',
+        'rejected'        => '<span class="badge bg-danger">ปฏิเสธ</span>',
+        'expired'         => '<span class="badge bg-dark">หมดอายุ</span>',
+        default           => '<span class="badge bg-secondary">-</span>'
+    };
+?>
+</td>
 
-        </div>
-    </div>
+<td>
+<?php if ($s['sub_status'] === 'waiting_approve'): ?>
+
+    <?php if ($s['slip_image']): ?>
+        <a href="/ld_project/<?= htmlspecialchars($s['slip_image']) ?>"
+           target="_blank"
+           class="btn btn-sm btn-outline-info">
+           ดูสลิป
+        </a>
+    <?php endif; ?>
+
+    <a href="approve.php?id=<?= $s['sub_id'] ?>"
+       class="btn btn-sm btn-success"
+       onclick="return confirm('อนุมัติร้านนี้?')">
+       Approve
+    </a>
+
+    <a href="reject.php?id=<?= $s['sub_id'] ?>"
+       class="btn btn-sm btn-danger"
+       onclick="return confirm('ปฏิเสธร้านนี้?')">
+       Reject
+    </a>
+
+<?php else: ?>
+    <span class="text-muted">-</span>
+<?php endif; ?>
+</td>
+
+</tr>
+<?php endforeach; ?>
+</tbody>
+</table>
+
+</div>
 </div>
 
+</div>
 </body>
 </html>

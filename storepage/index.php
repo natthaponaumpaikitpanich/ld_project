@@ -2,47 +2,27 @@
 session_start();
 require_once "../ld_db.php";
 
-/* ================= STORE ================= */
+/* ================= MIDDLEWARE SUBSCRIPTION ================= */
+include "middleware_subscription.php";
+
+/* ================= BASIC AUTH ================= */
 $store_id = $_SESSION['store_id'] ?? null;
 if (!$store_id) {
-    die("ไม่พบข้อมูลร้าน");
+    die("ไม่พบร้าน");
 }
 
-/* ================= SUBSCRIPTION STATUS ================= */
-$sub_status = 'pending_payment';
-
-$stmt = $pdo->prepare("
-    SELECT status
-    FROM store_subscriptions
-    WHERE store_id = ?
-    ORDER BY created_at DESC
-    LIMIT 1
-");
-$stmt->execute([$store_id]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if ($row) {
-    $sub_status = $row['status'];
-}
-
-$STORE_LOCKED = ($sub_status !== 'active');
-
-
-
-include 'assets/style.php';
-include 'assets/sum.php';
-
-/* ================= PROMOTIONS ================= */
-$promos = $pdo->query("
+/* ================= PROMOTIONS (จากแอดมิน) ================= */
+$sql = "
     SELECT title, image
     FROM promotions
     WHERE status = 'active'
       AND start_date <= CURDATE()
       AND end_date >= CURDATE()
     ORDER BY created_at DESC
-")->fetchAll(PDO::FETCH_ASSOC);
+";
+$promos = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
-/* ================= INCOME ================= */
+/* ================= TODAY INCOME ================= */
 $stmt = $pdo->prepare("
     SELECT IFNULL(SUM(p.amount),0)
     FROM payments p
@@ -54,6 +34,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$store_id]);
 $today_income = $stmt->fetchColumn();
 
+/* ================= MONTH INCOME ================= */
 $stmt = $pdo->prepare("
     SELECT IFNULL(SUM(p.amount),0)
     FROM payments p
@@ -66,29 +47,39 @@ $stmt = $pdo->prepare("
 $stmt->execute([$store_id]);
 $month_income = $stmt->fetchColumn();
 
-/* ================= TOTAL USERS ================= */
-$total_users = (int)$pdo->query("
-    SELECT COUNT(*) 
+/* ================= TOTAL USERS (ลูกค้า ไม่รวม admin / owner) ================= */
+$userStmt = $pdo->query("
+    SELECT COUNT(*)
     FROM users
     WHERE role NOT IN ('platform_admin','store_owner')
-")->fetchColumn();
+");
+$total_users = (int)$userStmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ร้านซักอบรีด</title>
+<title>Dashboard ร้านซักอบรีด</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
+body {
+    background:#f5f7fb;
+    font-family:'Kanit',sans-serif;
+}
+
+/* ===== LOCK MODE ===== */
 body.store-locked #app {
     filter: blur(6px);
     pointer-events: none;
     user-select: none;
 }
 
-#payment-overlay {
+/* ===== POPUP OVERLAY ===== */
+#subscription-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,.6);
@@ -98,96 +89,112 @@ body.store-locked #app {
     justify-content: center;
 }
 
-#payment-box {
-    background:#fff;
-    border-radius:14px;
-    width:420px;
-    padding:24px;
+/* ===== UI ===== */
+.card { border-radius:14px;border:none }
+.stat-card{display:flex;justify-content:space-between;align-items:center}
+.stat-icon{
+    width:48px;height:48px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;color:#fff
 }
+.quick-btn{
+    border-radius:16px;color:#fff;
+    padding:22px;font-weight:600;
+    box-shadow:0 10px 20px rgba(0,0,0,.08)
+}
+.bg-grad-orders{background:linear-gradient(135deg,#2097ff,#52ebf3,#00ffa2)}
+.bg-grad-delivery{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.bg-grad-revenue{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+.bg-grad-staff{background:linear-gradient(135deg,#ac5ff9,#ff009d)}
+.bg-grad-promotion{background:linear-gradient(135deg,#ff06d5,#00d9ff)}
 </style>
 </head>
 
 <body class="<?= $STORE_LOCKED ? 'store-locked' : '' ?>">
 
-<!-- ===== APP ===== -->
-<div id="app" class="container py-4">
+<?php
+/* ===== POPUP เลือกแพ็กเกจ ===== */
+if ($STORE_LOCKED) {
+    include "menu/subscription/popup_plan.php";
+}
+?>
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4>Dashboard ของเจ้าของร้าน</h4>
-            <small class="text-muted">บริหารจัดการธุรกิจซักรีด</small>
-        </div>
-        <div>
-            <a href="../loginpage/logout.php" class="btn btn-danger">ออกจากระบบ</a>
-        </div>
+<div id="app">
+<div class="container py-4">
+
+<!-- ===== HEADER ===== -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Dashboard ของเจ้าของร้าน</h4>
+        <small class="text-muted">บริหารจัดการธุรกิจซักอบรีด</small>
     </div>
-
-    <!-- SUMMARY -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card p-3">
-                <small>รายได้วันนี้</small>
-                <h4><?= number_format($today_income,2) ?> ฿</h4>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card p-3">
-                <small>รายได้เดือนนี้</small>
-                <h4><?= number_format($month_income,2) ?> ฿</h4>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card p-3">
-                <small>ผู้ใช้ทั้งหมด</small>
-                <h4><?= number_format($total_users) ?> คน</h4>
-            </div>
-        </div>
-    </div>
-
-    <?php include 'body.php'; ?>
-</div>
-
-<!-- ===== PAYMENT OVERLAY ===== -->
-<?php if ($STORE_LOCKED): ?>
-<div id="payment-overlay">
-    <div id="payment-box">
-        <h5 class="fw-bold mb-2">🔒 ร้านยังไม่เปิดใช้งาน</h5>
-        <p class="text-muted mb-3">
-            กรุณาชำระค่าบริการเพื่อเริ่มใช้งานระบบ
-        </p>
-
-        <img src="../assets/qr_admin.png" class="img-fluid mb-3">
-
-        <form id="slipForm" enctype="multipart/form-data">
-            <input type="file" name="slip" class="form-control mb-2" required>
-            <button class="btn btn-primary w-100">ส่งสลิป</button>
-        </form>
-
-        <div id="waitMsg" class="text-center text-muted mt-3 d-none">
-            ⏳ รอแอดมินตรวจสอบ...
-        </div>
+    <div class="d-flex gap-2">
+        <a href="../loginpage/logout.php" class="btn btn-danger bi bi-box-arrow-left"> ออกจากระบบ</a>
+        <a href="index.php?link=profile" class="btn btn-primary bi bi-person"> โปรไฟล์</a>
     </div>
 </div>
-<?php endif; ?>
+
+<!-- ===== PROMOTION ===== -->
+<?php if ($promos): ?>
+<div id="promoCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+<div class="carousel-inner rounded shadow">
+<?php foreach ($promos as $i=>$p): ?>
+<div class="carousel-item <?= $i==0?'active':'' ?>">
+<img src="../adminpage/promotion/uploads/<?= htmlspecialchars($p['image']) ?>"
+     class="d-block w-100" style="height:380px;object-fit:cover">
+</div>
+<?php endforeach ?>
+</div>
+</div>
+<?php endif ?>
+
+<!-- ===== SUMMARY ===== -->
+<div class="row g-3 mb-4">
+<div class="col-md-4">
+<div class="card p-3 stat-card">
+<div>
+<small>รายได้วันนี้</small>
+<h4><?= number_format($today_income,2) ?> ฿</h4>
+</div>
+<div class="stat-icon bg-primary"><i class="bi bi-currency-dollar"></i></div>
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="card p-3 stat-card">
+<div>
+<small>รายได้เดือนนี้</small>
+<h4><?= number_format($month_income,2) ?> ฿</h4>
+</div>
+<div class="stat-icon bg-info"><i class="bi bi-graph-up"></i></div>
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="card p-3 stat-card">
+<div>
+<small>ผู้ใช้ทั้งหมด</small>
+<h4><?= number_format($total_users) ?> คน</h4>
+</div>
+<div class="stat-icon bg-success"><i class="bi bi-person"></i></div>
+</div>
+</div>
+</div>
+
+<!-- ===== QUICK MENU ===== -->
+<div class="row g-2 mb-4">
+<div class="col-md-2"><a href="index.php?link=orders" class="btn quick-btn bg-grad-orders w-100">ออเดอร์</a></div>
+<div class="col-md-2"><a href="index.php?link=delivery" class="btn quick-btn bg-grad-delivery w-100">จัดส่ง</a></div>
+<div class="col-md-2"><a href="index.php?link=revenue" class="btn quick-btn bg-grad-revenue w-100">รายได้</a></div>
+<div class="col-md-3"><a href="index.php?link=promotion" class="btn quick-btn bg-grad-promotion w-100">โปรโมชั่น</a></div>
+<div class="col-md-3"><a href="index.php?link=management" class="btn quick-btn bg-grad-staff w-100">พนักงาน</a></div>
+</div>
+
+<?php include "body.php"; ?>
+
+</div>
+</div>
 
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
-
-<script>
-<?php if ($STORE_LOCKED): ?>
-document.getElementById('slipForm').onsubmit = async e => {
-    e.preventDefault();
-    document.getElementById('waitMsg').classList.remove('d-none');
-};
-
-/* realtime check */
-setInterval(async () => {
-    const res = await fetch('ajax/check_subscription.php');
-    const json = await res.json();
-    if (json.status === 'active') location.reload();
-}, 5000);
-<?php endif; ?>
-</script>
-
 </body>
 </html>

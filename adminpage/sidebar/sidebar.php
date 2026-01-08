@@ -104,7 +104,6 @@ $report_id = $_GET['id'] ?? null;
     <!-- MAIN -->
     <a href="sidebar.php?link=Dashboard"><i class="bi bi-speedometer2"></i> <span>Dashboard</span></a>
     <a href="sidebar.php?link=allstore"><i class="bi bi-shop"></i> <span>ร้านค้าทั้งหมด</span></a>
-    <a href="sidebar.php?link=create"><i class="bi bi-plus-circle"></i> <span>สมัครร้านค้าใหม่</span></a>
 
     <!-- BILLING -->
     <hr style="border-color:#FFFFFF ;">
