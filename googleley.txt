@@ -1,2 +1,0 @@
-$client->setClientId('837743881206-a4uglohivo68orpn5h88a9nhko7aga2g.apps.googleusercontent.com');
-$client->setClientSecret('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');
