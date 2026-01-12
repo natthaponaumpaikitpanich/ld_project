@@ -61,7 +61,6 @@ try {
 
     header("Location: ../../index.php?link=Profile");
     exit;
-
 } catch (Exception $e) {
     $pdo->rollBack();
     die("เกิดข้อผิดพลาด: " . $e->getMessage());

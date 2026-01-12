@@ -45,9 +45,8 @@ try {
 
     $pdo->commit();
 
-    header("Location: order_view.php?id=".$order_id);
+    header("Location: order_view.php?id=" . $order_id);
     exit;
-
 } catch (Exception $e) {
     $pdo->rollBack();
     die("เกิดข้อผิดพลาด: " . $e->getMessage());

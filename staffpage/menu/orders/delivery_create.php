@@ -43,5 +43,5 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$order_id]);
 
-header("Location: order_view.php?id=" . $order_id);
+header("Location: detail.php?id=" . $order_id);
 exit;

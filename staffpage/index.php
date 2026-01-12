@@ -8,21 +8,25 @@ include_once "assets/boostap.php";
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'staff') {
     die('ไม่มีสิทธิ์เข้าถึงหน้านี้');
 }
+$user_id = $_SESSION['user_id'];
+
 $stmt = $pdo->prepare("
     SELECT 
-        p.*,
+        o.id AS order_id,
         o.order_number,
-        o.status AS order_status,
+        o.status,
+        o.created_at,
         u.display_name AS customer_name
-    FROM pickups p
-    JOIN orders o ON p.order_id = o.id
-    LEFT JOIN users u ON o.customer_id = u.id
-    WHERE p.assigned_to = ?
-      AND DATE(p.scheduled_at) = CURDATE()
-    ORDER BY p.scheduled_at ASC
+    FROM orders o
+    JOIN store_staff ss ON ss.store_id = o.store_id
+    LEFT JOIN users u ON u.id = o.customer_id
+    WHERE ss.user_id = ?
+      AND o.status != 'completed'
+    ORDER BY o.created_at ASC
 ");
 $stmt->execute([$_SESSION['user_id']]);
 $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>

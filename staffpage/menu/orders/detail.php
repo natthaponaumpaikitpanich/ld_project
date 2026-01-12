@@ -3,7 +3,7 @@ session_start();
 require_once "../../../ld_db.php";
 
 /* ========= AUTH ========= */
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['store_owner','staff'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['store_owner', 'staff'])) {
     die('no permission');
 }
 
@@ -12,7 +12,7 @@ $order_id = $_GET['id'] ?? null;
 if (!$order_id) die('no order');
 
 /* ========= POST : รับเงินสด ========= */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['cash_paid'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cash_paid'])) {
 
     $pdo->beginTransaction();
 
@@ -24,11 +24,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['cash_paid'])) {
     $stmt->execute([$order_id]);
     $o = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($o && $o['payment_status']!=='paid') {
+    if ($o && $o['payment_status'] !== 'paid') {
 
         $pdo->prepare("
             INSERT INTO payments
-            (id, order_id, amount, method, status, confirmed_by, confirmed_at, created_at)
+            (id, order_id, amount, provider, status, confirmed_by, confirmed_at, created_at)
             VALUES (UUID(), ?, ?, 'cash', 'confirmed', ?, NOW(), NOW())
         ")->execute([
             $order_id,
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['cash_paid'])) {
 }
 
 /* ========= POST : เปลี่ยนสถานะ ========= */
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['next_status'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next_status'])) {
 
     $stmt = $pdo->prepare("
         SELECT payment_status, status
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['next_status'])) {
     $stmt->execute([$order_id]);
     $chk = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($chk['status']==='ready' && $chk['payment_status']!=='paid') {
+    if ($chk['status'] === 'ready' && $chk['payment_status'] !== 'paid') {
         die('ยังไม่ได้ชำระเงิน');
     }
 
@@ -70,18 +70,18 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['next_status'])) {
     $pdo->prepare("
         UPDATE orders SET status=?
         WHERE id=?
-    ")->execute([$next,$order_id]);
+    ")->execute([$next, $order_id]);
 
     $pdo->prepare("
         UPDATE pickups SET status=?
         WHERE order_id=?
-    ")->execute([$next,$order_id]);
+    ")->execute([$next, $order_id]);
 
     $pdo->prepare("
         INSERT INTO order_status_logs
         (id,order_id,status,changed_by)
         VALUES (UUID(),?,?,?)
-    ")->execute([$order_id,$next,$user_id]);
+    ")->execute([$order_id, $next, $user_id]);
 
     $pdo->commit();
     header("Location: detail.php?id=".$order_id);
@@ -96,16 +96,26 @@ $stmt = $pdo->prepare("
     JOIN store_staff ss ON ss.store_id=o.store_id
     WHERE o.id=? AND ss.user_id=?
 ");
-$stmt->execute([$order_id,$user_id]);
+$stmt->execute([$order_id, $user_id]);
 $order = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$order) die('not found');
 
-/* ========= FETCH PAYMENT (promptpay ล่าสุดทุกสถานะ) ========= */
+/* ========= FETCH PICKUP (ที่อยู่ / พิกัด) ========= */
+$stmt = $pdo->prepare("
+    SELECT pickup_address, lat, lng
+    FROM pickups
+    WHERE order_id=?
+    LIMIT 1
+");
+$stmt->execute([$order_id]);
+$pickup = $stmt->fetch(PDO::FETCH_ASSOC);
+
+/* ========= FETCH PAYMENT (promptpay ล่าสุด) ========= */
 $stmt = $pdo->prepare("
     SELECT *
     FROM payments
     WHERE order_id=?
-      AND method='promptpay'
+      AND provider='promptpay'
     ORDER BY created_at DESC
     LIMIT 1
 ");
@@ -172,19 +182,10 @@ $need_payment = ($order['status']==='ready' && $order['payment_status']!=='paid'
         </div>
     <?php endif; ?>
 
-    <?php if ($payment['status']==='pending'): ?>
-        <a href="../payment_confirm.php?id=<?= $payment['id'] ?>"
-           class="btn btn-success btn-sm">
-            ตรวจสอบ / ยืนยันสลิป
-        </a>
-    <?php endif; ?>
-
 <?php else: ?>
     <div class="alert alert-secondary">ยังไม่ได้ชำระเงิน</div>
-
     <form method="post">
-        <button name="cash_paid"
-                class="btn btn-outline-success">
+        <button name="cash_paid" class="btn btn-outline-success">
             💵 รับเงินสดแล้ว
         </button>
     </form>
@@ -193,10 +194,27 @@ $need_payment = ($order['status']==='ready' && $order['payment_status']!=='paid'
 </div>
 </div>
 
-<!-- ===== WARNING ===== -->
-<?php if ($need_payment): ?>
-<div class="alert alert-warning">
-⚠️ งานนี้ยังไม่ได้ชำระเงิน (แต่ร้านสามารถรับเงินสดแล้วกดต่อได้)
+<!-- ===== NAVIGATION (เฉพาะกำลังส่ง) ===== -->
+<?php if ($order['status']==='out_for_delivery' && $pickup): ?>
+<div class="card mb-3">
+<div class="card-body text-center">
+
+<h6 class="fw-bold mb-2">🗺️ นำทางไปยังลูกค้า</h6>
+
+<button class="btn btn-success w-100"
+    onclick="navigateTo(
+        <?= $pickup['lat'] ?? 'null' ?>,
+        <?= $pickup['lng'] ?? 'null' ?>,
+        '<?= htmlspecialchars($pickup['pickup_address'],ENT_QUOTES) ?>'
+    )">
+    🚗 เปิดนำทาง Google Maps
+</button>
+
+<div class="small text-muted mt-2">
+    <?= htmlspecialchars($pickup['pickup_address']) ?>
+</div>
+
+</div>
 </div>
 <?php endif; ?>
 
@@ -215,5 +233,41 @@ $need_payment = ($order['status']==='ready' && $order['payment_status']!=='paid'
 </a>
 
 </div>
+
+<script>
+function navigateTo(lat, lng, address) {
+
+    if (!navigator.geolocation) {
+        alert("อุปกรณ์ไม่รองรับ GPS");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(pos){
+            const originLat = pos.coords.latitude;
+            const originLng = pos.coords.longitude;
+
+            let destination = '';
+            if (lat && lng) {
+                destination = lat + ',' + lng;
+            } else {
+                destination = encodeURIComponent(address);
+            }
+
+            const url =
+                `https://www.google.com/maps/dir/?api=1` +
+                `&origin=${originLat},${originLng}` +
+                `&destination=${destination}` +
+                `&travelmode=driving`;
+
+            window.open(url,'_blank');
+        },
+        function(){
+            alert("ไม่สามารถเข้าถึงตำแหน่งปัจจุบันได้");
+        }
+    );
+}
+</script>
+
 </body>
 </html>

@@ -1,8 +1,18 @@
 <?php
 session_start();
 require_once "../ld_db.php";
+
+/* ===== AUTH ===== */
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    header("Location: ../loginpage/login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
 include_once "assets/head.php";
-// ===== FORCE PAYMENT CHECK =====
+
+/* ===== FORCE PAYMENT CHECK ===== */
 $stmt = $pdo->prepare("
     SELECT id
     FROM orders
@@ -12,40 +22,23 @@ $stmt = $pdo->prepare("
     ORDER BY created_at DESC
     LIMIT 1
 ");
-$stmt->execute([$_SESSION['user_id']]);
+$stmt->execute([$user_id]);
 $unpaidOrder = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stmt = $pdo->prepare("
-    SELECT o.id
-    FROM orders o
-    LEFT JOIN payments p 
-        ON p.order_id = o.id 
-        AND p.status = 'pending'
-    WHERE o.customer_id = ?
-      AND o.payment_status = 'pending'
-      AND p.id IS NULL
-    LIMIT 1
-");
-$stmt->execute([$_SESSION['user_id']]);
-
-
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
-    header("Location: ../loginpage/login.php");
+if ($unpaidOrder) {
+    header("Location: payments.php?force=1");
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-
 /* =========================
-   ดึงโปรโมชั่น
+   PROMOTIONS
    ========================= */
 $sqlPromotion = "
     SELECT 
         p.*,
         s.name AS store_name
     FROM promotions p
-    INNER JOIN stores s ON p.store_id = s.id
+    JOIN stores s ON p.store_id = s.id
     WHERE p.status = 'active'
       AND p.store_id IS NOT NULL
       AND p.audience IN ('all','customers','store_specific')
@@ -54,36 +47,29 @@ $sqlPromotion = "
     ORDER BY p.created_at DESC
     LIMIT 10
 ";
-
 $stmtPromotion = $pdo->prepare($sqlPromotion);
 $stmtPromotion->execute();
-$promotions = $stmtPromotion->fetchAll();
+$promotions = $stmtPromotion->fetchAll(PDO::FETCH_ASSOC);
 
 /* =========================
-   ดึงข้อมูลผู้ใช้
+   USER INFO
    ========================= */
-$sqlUser = "
+$stmtUser = $pdo->prepare("
     SELECT display_name, email, phone, profile_image
     FROM users
     WHERE id = ?
-";
-
-$stmtUser = $pdo->prepare($sqlUser);
+");
 $stmtUser->execute([$user_id]);
-$user = $stmtUser->fetch();
+$user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
-    <meta charset="UTF-8">
-    <title>หน้าหลักลูกค้า</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <title>ระบบร้านซักอบรีด</title>
+<meta charset="UTF-8">
+<title>หน้าหลักลูกค้า</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -110,7 +96,7 @@ $user = $stmtUser->fetch();
 <div class="hero mb-3">
     <h5>🧺 ยินดีต้อนรับสู่ระบบซักอบรีด</h5>
     <div class="small opacity-75">
-        ส่งผ้า · ติดตามงาน · ชำระเงิน ได้ในที่เดียว
+        ส่งผ้า · ติดตามงาน · ชำระเงิน
     </div>
 </div>
 
@@ -125,15 +111,6 @@ $user = $stmtUser->fetch();
         </div>
         <?php endforeach; ?>
     </div>
-
-    <button class="carousel-control-prev" type="button"
-            data-bs-target="#promoCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-    </button>
-    <button class="carousel-control-next" type="button"
-            data-bs-target="#promoCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-    </button>
 </div>
 <?php endif; ?>
 
@@ -181,7 +158,6 @@ $user = $stmtUser->fetch();
 <?php include_once "body.php"; ?>
 
 </div>
-
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

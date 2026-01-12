@@ -8,19 +8,19 @@ if (isset($_GET['link'])) {
 
 if ($link == 'home') {
     include_once "index.php";
-}
-elseif ($link == 'Home') {
+} elseif ($link == 'Home') {
     include_once "home.php";
-}
-elseif ($link == 'Tasks') {
+} elseif ($link == 'Tasks') {
     include_once "menu/orders/index.php";
-}
-elseif ($link == 'Scan') {
+} elseif ($link == 'Scan') {
     include_once "menu/scan/staff_scan_start.php";
-}
-elseif ($link == 'Profile') {
+} elseif ($link == 'Profile') {
     include_once "menu/profile/profile.php";
 }
+elseif ($link == 'Map') {
+    include_once "menu/map/map_index.php";
+}
+
 
 
 ?>
