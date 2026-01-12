@@ -46,6 +46,15 @@
                 <label>เบอร์โทร</label>
                 <input type="text" name="phone" class="form-control" required>
             </div>
+            <hr>
+
+<a href="google_login.php"
+   class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2">
+   <img src="../image/g-logo.png"
+        style="width:18px">
+   สมัคร / เข้าสู่ระบบด้วย Google
+</a>
+
             <div class="text-center">
                 ยังไม่มีบัญชีใช่ไหม
             <a href="../register/register.php">สมัครนี่เลย</a>

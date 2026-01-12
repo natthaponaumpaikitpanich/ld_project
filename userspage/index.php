@@ -61,15 +61,57 @@ $stmtUser = $pdo->prepare("
 ");
 $stmtUser->execute([$user_id]);
 $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+/* ===== กัน error ถ้า user ไม่เจอ ===== */
+if (!$user) {
+    session_destroy();
+    header("Location: ../loginpage/login.php");
+    exit;
+}
+
+/* =========================
+   PROFILE IMAGE HANDLE
+   ========================= */
+$img = $user['profile_image'] ?? '';
+
+if (!$img) {
+    $img = '../assets/default-user.png';
+} elseif (str_starts_with($img, 'http')) {
+    // Google profile image → ใช้ URL ตรง
+} else {
+    // รูปที่อัปโหลดเอง
+    $img = '../' . ltrim($img, '/');
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <title>หน้าหลักลูกค้า</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Kanit', sans-serif;
+}
+.profile-img {
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    object-fit:cover;
+}
+.card-menu {
+    border-radius:16px;
+    transition:.2s;
+}
+.card-menu:hover {
+    transform: translateY(-3px);
+}
+</style>
 </head>
 
 <body>
@@ -83,8 +125,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
     </div>
 
     <div class="d-flex align-items-center gap-2">
-        <img src="../<?= $user['profile_image'] ?: 'assets/default-user.png' ?>"
-             class="profile-img">
+        <img src="<?= htmlspecialchars($img) ?>" class="profile-img">
         <a href="../loginpage/logout.php"
            class="btn btn-outline-danger btn-sm">
             ออก
@@ -93,7 +134,8 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 </div>
 
 <!-- ===== HERO ===== -->
-<div class="hero mb-3">
+<div class="hero mb-3 p-3 rounded text-white"
+     style="background:linear-gradient(135deg,#0d6efd,#20c997)">
     <h5>🧺 ยินดีต้อนรับสู่ระบบซักอบรีด</h5>
     <div class="small opacity-75">
         ส่งผ้า · ติดตามงาน · ชำระเงิน
@@ -107,7 +149,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
         <?php foreach ($promotions as $i => $p): ?>
         <div class="carousel-item <?= $i === 0 ? 'active' : '' ?>">
             <img src="../<?= htmlspecialchars($p['image']) ?>"
-                 class="d-block w-100">
+                 class="d-block w-100 rounded">
         </div>
         <?php endforeach; ?>
     </div>
@@ -120,7 +162,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 <div class="col-6">
 <a href="menu/orders/create_order.php" class="text-decoration-none text-dark">
 <div class="card card-menu text-center p-4">
-    <i class="bi bi-basket text-primary"></i>
+    <i class="bi bi-basket text-primary fs-3"></i>
     <div class="fw-semibold mt-2">ส่งซักผ้า</div>
 </div>
 </a>
@@ -129,7 +171,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 <div class="col-6">
 <a href="index.php?link=orders" class="text-decoration-none text-dark">
 <div class="card card-menu text-center p-4">
-    <i class="bi bi-clock-history text-success"></i>
+    <i class="bi bi-clock-history text-success fs-3"></i>
     <div class="fw-semibold mt-2">ติดตามสถานะ</div>
 </div>
 </a>
@@ -138,7 +180,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 <div class="col-6">
 <a href="payments.php" class="text-decoration-none text-dark">
 <div class="card card-menu text-center p-4">
-    <i class="bi bi-credit-card text-warning"></i>
+    <i class="bi bi-credit-card text-warning fs-3"></i>
     <div class="fw-semibold mt-2">การชำระเงิน</div>
 </div>
 </a>
@@ -147,7 +189,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 <div class="col-6">
 <a href="index.php?link=profile" class="text-decoration-none text-dark">
 <div class="card card-menu text-center p-4">
-    <i class="bi bi-person-circle text-info"></i>
+    <i class="bi bi-person-circle text-info fs-3"></i>
     <div class="fw-semibold mt-2">โปรไฟล์</div>
 </div>
 </a>
@@ -158,6 +200,7 @@ $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 <?php include_once "body.php"; ?>
 
 </div>
+
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
