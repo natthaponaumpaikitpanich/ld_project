@@ -70,4 +70,4 @@ $_SESSION['role']    = 'customer';
 
 /* ===== redirect ===== */
 header("Location: ../userspage/index.php");
-exit;
+exit; 
