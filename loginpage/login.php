@@ -50,7 +50,7 @@
 
 <a href="google_login.php"
    class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2">
-   <img src="../image/g-logo.png"
+   <img src="../image/Google__G__logo.svg.png"
         style="width:18px">
    สมัคร / เข้าสู่ระบบด้วย Google
 </a>

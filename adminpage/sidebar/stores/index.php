@@ -1,11 +1,6 @@
 <?php
 require_once "../../ld_db.php";
 
-/*
-|--------------------------------------------------------------------------
-| QUERY: ร้านทั้งหมด + subscription ล่าสุด
-|--------------------------------------------------------------------------
-*/
 $sql = "
 SELECT
     s.id   AS store_id,
@@ -39,114 +34,149 @@ $stores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
 <!doctype html>
 <html lang="th">
+
 <head>
-<meta charset="utf-8">
-<title>ร้านค้าทั้งหมด</title>
-<link href="/ld_project/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <title>ร้านค้าทั้งหมด</title>
+    <link href="/ld_project/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/ld_project/adminpage/assets/style.css" rel="stylesheet">
+    <link href="../assets/style.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 
-<body style="margin-left:260px;">
-<div class="container mt-4">
+<body>
+    <div class="container-fluid px-4 mt-4">
 
-<h3 class="fw-bold mb-3">🏪 ร้านซักอบรีดทั้งหมด</h3>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-0">🏪 ร้านซักอบรีดทั้งหมด</h3>
+            <small class="text-muted">
+                ร้านค้าที่ลงทะเบียนและเช่าระบบในแพลตฟอร์ม
+            </small>
+        </div>
+    </div>
 
-<div class="card shadow">
-<div class="card-body p-0">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
 
-<table class="table table-striped align-middle mb-0">
-<thead class="table-light">
-<tr>
-    <th>ชื่อร้าน</th>
-    <th>เบอร์</th>
-    <th>วันที่สมัคร</th>
-    <th>แพ็กเกจ</th>
-    <th>สถานะ</th>
-    <th width="220">จัดการ</th>
-</tr>
-</thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ร้านค้า</th>
+                        <th>ติดต่อ</th>
+                        <th>วันที่สมัคร</th>
+                        <th>แพ็กเกจ</th>
+                        <th>สถานะ</th>
+                        <th class="text-end" width="260">จัดการ</th>
+                    </tr>
+                </thead>
 
-<tbody>
-<?php if (empty($stores)): ?>
-<tr>
-    <td colspan="6" class="text-center text-muted py-4">
-        ยังไม่มีร้าน
-    </td>
-</tr>
-<?php endif; ?>
+                <tbody>
+                <?php if (empty($stores)): ?>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            ยังไม่มีร้านในระบบ
+                        </td>
+                    </tr>
+                <?php endif; ?>
 
-<?php foreach ($stores as $s): ?>
-<tr>
+                <?php foreach ($stores as $s): ?>
+                <tr>
 
-<td>
-    <div class="fw-semibold"><?= htmlspecialchars($s['store_name']) ?></div>
-    <small class="text-muted"><?= nl2br(htmlspecialchars($s['address'])) ?></small>
-</td>
+                    <!-- STORE -->
+                    <td>
+                        <div class="fw-semibold">
+                            <?= htmlspecialchars($s['store_name']) ?>
+                        </div>
+                        <small class="text-muted">
+                            <?= nl2br(htmlspecialchars($s['address'])) ?>
+                        </small>
+                    </td>
 
-<td><?= htmlspecialchars($s['phone']) ?></td>
+                    <!-- CONTACT -->
+                    <td>
+                        <span class="fw-semibold">
+                            <?= htmlspecialchars($s['phone']) ?>
+                        </span>
+                    </td>
 
-<td><?= date('d/m/Y', strtotime($s['store_created'])) ?></td>
+                    <!-- DATE -->
+                    <td>
+                        <?= date('d/m/Y', strtotime($s['store_created'])) ?>
+                    </td>
 
-<td>
-<?php if ($s['plan_name']): ?>
-    <span class="badge bg-primary">
-        <?= htmlspecialchars($s['plan_name']) ?>
-    </span><br>
-    <small class="text-muted">
-        <?= number_format($s['plan_price'],2) ?> ฿
-    </small>
-<?php else: ?>
-    <span class="badge bg-secondary">ยังไม่สมัคร</span>
-<?php endif; ?>
-</td>
+                    <!-- PLAN -->
+                    <td>
+                    <?php if ($s['plan_name']): ?>
+                        <span class="badge bg-primary mb-1">
+                            <?= htmlspecialchars($s['plan_name']) ?>
+                        </span><br>
+                        <small class="text-muted">
+                            <?= number_format($s['plan_price'],2) ?> ฿ / เดือน
+                        </small>
+                    <?php else: ?>
+                        <span class="badge bg-secondary">
+                            ยังไม่สมัครแพ็กเกจ
+                        </span>
+                    <?php endif; ?>
+                    </td>
 
-<td>
-<?php
-    echo match($s['sub_status']) {
-        'waiting_approve' => '<span class="badge bg-warning">รออนุมัติ</span>',
-        'active'          => '<span class="badge bg-success">ใช้งานได้</span>',
-        'rejected'        => '<span class="badge bg-danger">ปฏิเสธ</span>',
-        'expired'         => '<span class="badge bg-dark">หมดอายุ</span>',
-        default           => '<span class="badge bg-secondary">-</span>'
-    };
-?>
-</td>
+                    <!-- STATUS -->
+                    <td>
+                        <?php
+                        echo match($s['sub_status']) {
+                            'waiting_approve' => '<span class="badge bg-warning text-dark">รออนุมัติ</span>',
+                            'active'          => '<span class="badge bg-success">ใช้งานอยู่</span>',
+                            'rejected'        => '<span class="badge bg-danger">ถูกปฏิเสธ</span>',
+                            'expired'         => '<span class="badge bg-dark">หมดอายุ</span>',
+                            default           => '<span class="badge bg-secondary">-</span>'
+                        };
+                        ?>
+                    </td>
 
-<td>
-<?php if ($s['sub_status'] === 'waiting_approve'): ?>
+                    <!-- ACTION -->
+                    <td class="text-end">
 
-    <?php if ($s['slip_image']): ?>
-        <a href="/ld_project/<?= htmlspecialchars($s['slip_image']) ?>"
-           target="_blank"
-           class="btn btn-sm btn-outline-info">
-           ดูสลิป
-        </a>
-    <?php endif; ?>
+                    <?php if ($s['sub_status'] === 'waiting_approve'): ?>
 
-    <a href="approve.php?id=<?= $s['sub_id'] ?>"
-       class="btn btn-sm btn-success"
-       onclick="return confirm('อนุมัติร้านนี้?')">
-       Approve
-    </a>
+                        <?php if ($s['slip_image']): ?>
+                            <a href="/ld_project/<?= htmlspecialchars($s['slip_image']) ?>"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-info me-1">
+                               ดูสลิป
+                            </a>
+                        <?php endif; ?>
 
-    <a href="reject.php?id=<?= $s['sub_id'] ?>"
-       class="btn btn-sm btn-danger"
-       onclick="return confirm('ปฏิเสธร้านนี้?')">
-       Reject
-    </a>
+                        <a href="approve.php?id=<?= $s['sub_id'] ?>"
+                           class="btn btn-sm btn-success me-1"
+                           onclick="return confirm('อนุมัติร้านนี้?')">
+                           Approve
+                        </a>
 
-<?php else: ?>
-    <span class="text-muted">-</span>
-<?php endif; ?>
-</td>
+                        <a href="reject.php?id=<?= $s['sub_id'] ?>"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('ปฏิเสธร้านนี้?')">
+                           Reject
+                        </a>
 
-</tr>
-<?php endforeach; ?>
-</tbody>
-</table>
+                    <?php else: ?>
+                        <span class="text-muted">-</span>
+                    <?php endif; ?>
+
+                    </td>
+
+                </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
 
 </div>
-</div>
 
-</div>
 </body>
+
 </html>

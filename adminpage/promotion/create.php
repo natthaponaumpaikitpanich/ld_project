@@ -1,115 +1,217 @@
-<?php
+    <?php
+    session_start();
+    require_once "../../ld_db.php";
 
-include_once '../assets/style.php';
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    // ===== สร้าง UUID =====
-    $id = bin2hex(random_bytes(16)); // 32 chars (พอสำหรับ CHAR(35))
-
-    $title = $_POST['title'];
-    $discount = $_POST['discount'];
-    $start_date = $_POST['start_date'];
-    $end_date = $_POST['end_date'];
-
-    // ===== Upload รูป =====
-    $image = null;
-    if (!empty($_FILES['image']['name'])) {
-
-        $targetDir = "uploads/";
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0777, true);
-        }
-
-        $fileName = time() . "_" . basename($_FILES["image"]["name"]);
-        $targetFilePath = $targetDir . $fileName;
-
-        move_uploaded_file($_FILES["image"]["tmp_name"], $targetFilePath);
-        $image = $fileName;
+    /* ===== AUTH ===== */
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'platform_admin') {
+        die('no permission');
     }
 
-    // ===== INSERT =====
-    $sql = $pdo->prepare("
-        INSERT INTO promotions
-        (id, title, discount, image, start_date, end_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+    $admin_id = $_SESSION['user_id'];
+
+    /* ===== STORES ===== */
+    $stmt = $pdo->prepare("
+        SELECT id, name
+        FROM stores
+        WHERE status = 'active'
+        ORDER BY name
     ");
+    $stmt->execute();
+    $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql->execute([
-        $id,
-        $title,
-        $discount,
-        $image,
-        $start_date,
-        $end_date
-    ]);
+    /* ===== SUBMIT ===== */
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    echo "<script>
-        alert('เพิ่มโปรโมชั่นสำเร็จ!');
-        window.location='index.php';
-    </script>";
-}
-?>
+        $id = sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0,0xffff), mt_rand(0,0xffff),
+            mt_rand(0,0xffff),
+            mt_rand(0,0x0fff) | 0x4000,
+            mt_rand(0,0x3fff) | 0x8000,
+            mt_rand(0,0xffff), mt_rand(0,0xffff), mt_rand(0,0xffff)
+        );
 
-<!DOCTYPE html>
-<html>
+        $title      = trim($_POST['title']);
+        $summary    = trim($_POST['summary']);
+        $message    = trim($_POST['message']);
+        $discount   = (int)$_POST['discount'];
+        $audience   = $_POST['audience']; // stores | store_specific
+        $store_id   = $_POST['store_id'] ?: null;
+        $status     = $_POST['status'];
+        $start_date = $_POST['start_date'];
+        $end_date   = $_POST['end_date'];
 
-<head>
-    <title>เพิ่มโปรโมชั่นใหม่</title>
-    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
-</head>
+        if ($audience === 'store_specific' && !$store_id) {
+            die('กรุณาเลือกร้านสำหรับโปรโมชั่นร้านเฉพาะ');
+        }
 
-<body class="bg-light">
+        /* ===== UPLOAD IMAGE ===== */
+        $imagePath = null;
+        if (!empty($_FILES['image']['name'])) {
 
-    <div class="container py-5">
+            $dir = "../../uploads/promotion/";
+            if (!is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="m-0">เพิ่มโปรโมชั่นใหม่</h4>
-            </div>
+            $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('promo_') . '.' . $ext;
 
-            <div class="card-body">
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $dir . $filename)) {
+                $imagePath = "uploads/promotion/" . $filename;
+            }
+        }
 
-                <form action="" method="POST" enctype="multipart/form-data" class="row g-3">
+        /* ===== INSERT ===== */
+        $stmt = $pdo->prepare("
+            INSERT INTO promotions (
+                id,
+                created_by,
+                store_id,
+                title,
+                discount,
+                summary,
+                message,
+                image,
+                start_date,
+                end_date,
+                status,
+                audience
+            ) VALUES (
+                ?,?,?,?,?,?,?,?,?,?,?,?
+            )
+        ");
 
-                    <div class="col-md-12">
-                        <label class="form-label">ชื่อโปรโมชั่น</label>
-                        <input type="text" name="title" class="form-control" required>
-                    </div>
+        $stmt->execute([
+            $id,
+            $admin_id,
+            $store_id,
+            $title,
+            $discount,
+            $summary,
+            $message,
+            $imagePath,
+            $start_date,
+            $end_date,
+            $status,
+            $audience
+        ]);
 
-                    <div class="col-md-6">
-                        <label class="form-label">ส่วนลด (%)</label>
-                        <input type="number" name="discount" class="form-control" required>
-                    </div>
+        header("Location: index.php?success=1");
+        exit;
+    }
+    ?>
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-                    <div class="col-md-6">
-                        <label class="form-label">รูปภาพโปรโมชั่น</label>
-                        <input type="file" name="image" class="form-control">
-                    </div>
+    <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>เพิ่มโปรโมชั่น</title>
+    <link rel="icon" href="../../image/3.jpg">
 
-                    <div class="col-md-6">
-                        <label class="form-label">วันที่เริ่ม</label>
-                        <input type="date" name="start_date" class="form-control" required>
-                    </div>
+    </head>
 
-                    <div class="col-md-6">
-                        <label class="form-label">วันที่สิ้นสุด</label>
-                        <input type="date" name="end_date" class="form-control" required>
-                    </div>
+    <body>
 
-                    <div class="col-12 text-end mt-4">
-                        <a href="index.php" class="btn btn-danger">ยกเลิก</a>
-                        <button type="submit" class="btn btn-primary">บันทึกโปรโมชั่น</button>
-                    </div>
+   <div class="container-fluid px-4 py-4">
 
-                </form>
-            </div>
-        </div>
+<div class="card shadow-sm border-0">
 
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            📢 สร้างโปรโมชั่นใหม่ (Platform Admin)
+        </h5>
     </div>
 
-    <!-- Bootstrap Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="card-body">
 
-</body>
+        <form method="post" enctype="multipart/form-data" class="row g-4">
 
-</html>
+            <div class="col-12">
+                <label class="form-label fw-semibold">ชื่อโปรโมชั่น</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">ส่วนลด / สิทธิพิเศษ</label>
+                <input type="number" name="discount" class="form-control" value="0">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">กลุ่มร้านค้า</label>
+                <select name="audience" class="form-select">
+                    <option value="stores">ร้านค้าทั้งหมด</option>
+                    <option value="store_specific">ร้านค้าเฉพาะ</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">สถานะ</label>
+                <select name="status" class="form-select">
+                    <option value="active">เปิดใช้งาน</option>
+                    <option value="inactive">ปิด</option>
+                    <option value="draft">ร่าง</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">เลือกร้าน (ถ้าเป็นร้านเฉพาะ)</label>
+                <select name="store_id" class="form-select">
+                    <option value="">-- ไม่ระบุ --</option>
+                    <?php foreach ($stores as $s): ?>
+                        <option value="<?= $s['id'] ?>">
+                            <?= htmlspecialchars($s['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">รูปโปรโมชั่น</label>
+                <input type="file" name="image" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">วันที่เริ่ม</label>
+                <input type="datetime-local" name="start_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">วันที่สิ้นสุด</label>
+                <input type="datetime-local" name="end_date" class="form-control" required>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">สรุปสั้น</label>
+                <input type="text" name="summary" class="form-control">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">รายละเอียดถึงร้านค้า</label>
+                <textarea name="message" rows="4" class="form-control"></textarea>
+            </div>
+
+            <div class="col-12 text-end mt-3">
+                <a href="index.php" class="btn btn-secondary">
+                    ยกเลิก
+                </a>
+                <button class="btn btn-primary">
+                    บันทึกโปรโมชั่น
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+</div>
+
+    <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
+    </body>
+    </html>

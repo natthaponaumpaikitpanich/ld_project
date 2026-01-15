@@ -24,9 +24,7 @@ elseif ($link == 'revenue') {
 elseif ($link == 'management') {
     include_once "menu/staff_edit/staff_index.php";
 }
-elseif ($link == 'qrcode') {
-    include_once "menu/qrgen/machines_index.php";
-}elseif ($link == 'promotion') {
+elseif ($link == 'promotion') {
     include_once "menu/promotion/promotion_index.php";
 }
 

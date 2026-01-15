@@ -178,10 +178,10 @@ body {
 </div>
 
 <div class="col-6">
-<a href="payments.php" class="text-decoration-none text-dark">
+<a href="menu/contact/contact_store.php" class="text-decoration-none text-dark">
 <div class="card card-menu text-center p-4">
-    <i class="bi bi-credit-card text-warning fs-3"></i>
-    <div class="fw-semibold mt-2">การชำระเงิน</div>
+    <i class="bi bi-chat-dots-fill text-success fs-3"></i>
+    <div class="fw-semibold mt-2">ติดต่อร้าน</div>
 </div>
 </a>
 </div>

@@ -87,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <title>สร้างงานจัดส่ง</title>
     <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="../../../image/3.jpg">
 </head>
 
 <body class="bg-light">

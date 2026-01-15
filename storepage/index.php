@@ -11,6 +11,8 @@ if (!isset($_SESSION['store_id'])) {
     exit;
 }
 
+$store_id = $_SESSION['store_id'];
+
 /* ================= PROMOTIONS (จากแอดมิน) ================= */
 $sql = "
     SELECT title, image
@@ -47,7 +49,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$store_id]);
 $month_income = $stmt->fetchColumn();
 
-/* ================= TOTAL USERS (ลูกค้า ไม่รวม admin / owner) ================= */
+/* ================= TOTAL USERS ================= */
 $userStmt = $pdo->query("
     SELECT COUNT(*)
     FROM users
@@ -62,35 +64,24 @@ $total_users = (int)$userStmt->fetchColumn();
 <title>Dashboard ร้านซักอบรีด</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link rel="icon" href="../image/3.jpg">
 <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
-body {
+body{
     background:#f5f7fb;
     font-family:'Kanit',sans-serif;
 }
 
 /* ===== LOCK MODE ===== */
-body.store-locked #app {
+body.store-locked #app{
     filter: blur(6px);
-    pointer-events: none;
-    user-select: none;
-}
-
-/* ===== POPUP OVERLAY ===== */
-#subscription-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    pointer-events:none;
 }
 
 /* ===== UI ===== */
-.card { border-radius:14px;border:none }
+.card{border-radius:14px;border:none}
 .stat-card{display:flex;justify-content:space-between;align-items:center}
 .stat-icon{
     width:48px;height:48px;border-radius:12px;
@@ -113,7 +104,7 @@ body.store-locked #app {
 <body class="<?= $STORE_LOCKED ? 'store-locked' : '' ?>">
 
 <?php
-/* ===== POPUP เลือกแพ็กเกจ ===== */
+/* ===== POPUP เลือกแพ็กเกจ (ถ้าโดน lock) ===== */
 if ($STORE_LOCKED) {
     include "menu/subscription/popup_plan.php";
 }
@@ -129,6 +120,9 @@ if ($STORE_LOCKED) {
         <small class="text-muted">บริหารจัดการธุรกิจซักอบรีด</small>
     </div>
     <div class="d-flex gap-2">
+        <button class="btn btn-outline-warning bi bi-exclamation-triangle"
+                onclick="openReportModal()"> แจ้งปัญหา</button>
+
         <a href="../loginpage/logout.php" class="btn btn-danger bi bi-box-arrow-left"> ออกจากระบบ</a>
         <a href="index.php?link=profile" class="btn btn-primary bi bi-person"> โปรไฟล์</a>
     </div>
@@ -137,57 +131,64 @@ if ($STORE_LOCKED) {
 <!-- ===== PROMOTION ===== -->
 <?php if ($promos): ?>
 <div id="promoCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-<div class="carousel-inner rounded shadow">
-<?php foreach ($promos as $i=>$p): ?>
-<div class="carousel-item <?= $i==0?'active':'' ?>">
-<img src="../adminpage/promotion/uploads/<?= htmlspecialchars($p['image']) ?>"
-     class="d-block w-100" style="height:380px;object-fit:cover">
-</div>
-<?php endforeach ?>
-</div>
+    <div class="carousel-inner rounded shadow">
+        <?php foreach ($promos as $i=>$p): ?>
+        <div class="carousel-item <?= $i===0?'active':'' ?>">
+            <img src="../adminpage/promotion/uploads/<?= htmlspecialchars($p['image']) ?>"
+                 class="d-block w-100"
+                 style="height:380px;object-fit:cover">
+        </div>
+        <?php endforeach ?>
+    </div>
 </div>
 <?php endif ?>
 
 <!-- ===== SUMMARY ===== -->
 <div class="row g-3 mb-4">
-<div class="col-md-4">
-<div class="card p-3 stat-card">
-<div>
-<small>รายได้วันนี้</small>
-<h4><?= number_format($today_income,2) ?> ฿</h4>
-</div>
-<div class="stat-icon bg-primary"><i class="bi bi-currency-dollar"></i></div>
-</div>
-</div>
+    <div class="col-md-4">
+        <div class="card p-3 stat-card">
+            <div>
+                <small>รายได้วันนี้</small>
+                <h4><?= number_format($today_income,2) ?> ฿</h4>
+            </div>
+            <div class="stat-icon bg-primary">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+        </div>
+    </div>
 
-<div class="col-md-4">
-<div class="card p-3 stat-card">
-<div>
-<small>รายได้เดือนนี้</small>
-<h4><?= number_format($month_income,2) ?> ฿</h4>
-</div>
-<div class="stat-icon bg-info"><i class="bi bi-graph-up"></i></div>
-</div>
-</div>
+    <div class="col-md-4">
+        <div class="card p-3 stat-card">
+            <div>
+                <small>รายได้เดือนนี้</small>
+                <h4><?= number_format($month_income,2) ?> ฿</h4>
+            </div>
+            <div class="stat-icon bg-info">
+                <i class="bi bi-graph-up"></i>
+            </div>
+        </div>
+    </div>
 
-<div class="col-md-4">
-<div class="card p-3 stat-card">
-<div>
-<small>ผู้ใช้ทั้งหมด</small>
-<h4><?= number_format($total_users) ?> คน</h4>
-</div>
-<div class="stat-icon bg-success"><i class="bi bi-person"></i></div>
-</div>
-</div>
+    <div class="col-md-4">
+        <div class="card p-3 stat-card">
+            <div>
+                <small>ผู้ใช้ทั้งหมด</small>
+                <h4><?= number_format($total_users) ?> คน</h4>
+            </div>
+            <div class="stat-icon bg-success">
+                <i class="bi bi-person"></i>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ===== QUICK MENU ===== -->
 <div class="row g-2 mb-4">
-<div class="col-md-2"><a href="index.php?link=orders" class="btn quick-btn bg-grad-orders w-100">ออเดอร์</a></div>
-<div class="col-md-2"><a href="index.php?link=delivery" class="btn quick-btn bg-grad-delivery w-100">จัดส่ง</a></div>
-<div class="col-md-2"><a href="index.php?link=revenue" class="btn quick-btn bg-grad-revenue w-100">รายได้</a></div>
-<div class="col-md-3"><a href="index.php?link=promotion" class="btn quick-btn bg-grad-promotion w-100">โปรโมชั่น</a></div>
-<div class="col-md-3"><a href="index.php?link=management" class="btn quick-btn bg-grad-staff w-100">พนักงาน</a></div>
+    <div class="col-md-2"><a href="index.php?link=orders" class="btn quick-btn bg-grad-orders w-100">ออเดอร์</a></div>
+    <div class="col-md-2"><a href="index.php?link=delivery" class="btn quick-btn bg-grad-delivery w-100">จัดส่ง</a></div>
+    <div class="col-md-2"><a href="index.php?link=revenue" class="btn quick-btn bg-grad-revenue w-100">รายได้</a></div>
+    <div class="col-md-3"><a href="index.php?link=promotion" class="btn quick-btn bg-grad-promotion w-100">โปรโมชั่น</a></div>
+    <div class="col-md-3"><a href="index.php?link=management" class="btn quick-btn bg-grad-staff w-100">พนักงาน</a></div>
 </div>
 
 <?php include "body.php"; ?>
@@ -195,6 +196,57 @@ if ($STORE_LOCKED) {
 </div>
 </div>
 
+<!-- ===== REPORT MODAL ===== -->
+<div id="reportModal" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    z-index:99999;
+    align-items:center;
+    justify-content:center;
+">
+    <div style="
+        background:#fff;
+        width:100%;
+        max-width:480px;
+        border-radius:16px;
+        padding:24px;
+    ">
+        <h5 class="fw-bold mb-3">🚨 แจ้งปัญหา / ส่งรายงานถึงผู้ดูแลระบบ</h5>
+
+        <form method="post" action="report_store_action.php">
+            <div class="mb-3">
+                <label class="form-label">หัวข้อปัญหา</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">รายละเอียด</label>
+                <textarea name="message" rows="4" class="form-control" required></textarea>
+            </div>
+
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" onclick="closeReportModal()">ยกเลิก</button>
+                <button class="btn btn-warning">ส่งรายงาน</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function openReportModal(){
+    document.getElementById('reportModal').style.display='flex';
+}
+function closeReportModal(){
+    document.getElementById('reportModal').style.display='none';
+}
+document.getElementById('reportModal').addEventListener('click',function(e){
+    if(e.target.id==='reportModal'){ closeReportModal(); }
+});
+</script>
+
 </body>
 </html>

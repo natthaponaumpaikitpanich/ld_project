@@ -103,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <title>สร้างคำสั่งซัก</title>
 <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="icon" href="../../../image/3.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
 <style>
 body{font-family:'Kanit',sans-serif}

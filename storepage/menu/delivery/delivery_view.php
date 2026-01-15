@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once "../../../ld_db.php";
-require_once "../../assets/boostap.php";
+
 
 if (!isset($_SESSION['user_id'], $_SESSION['store_id'])) {
     die("กรุณาเข้าสู่ระบบ");
@@ -55,6 +55,7 @@ if (!$data) {
 <head>
     <meta charset="UTF-8">
     <title>รายละเอียดการจัดส่ง</title>
+    <link rel="icon" href="../../../image/3.jpg">
     <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 

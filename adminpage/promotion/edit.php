@@ -59,13 +59,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 ?>
 
 <!DOCTYPE html>
-<html lang="th">
-<?php include_once '../assets/style.php'; ?>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+    <link rel="icon" href="../../image/3.jpg">
+    </link>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../bootstrap/bootstrap-icons.css" rel="stylesheet">
+   
+    </head>
 
-<head>
-    <meta charset="UTF-8">
-    <title>แก้ไขโปรโมชั่น</title>
-    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+<style>
+body{background:#f4f6f9;font-family: 'Kanit', sans-serif;}
+.card{border-radius:16px}
+</style>
 </head>
 
 <body class="bg-light">
@@ -103,11 +111,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             required>
                     </div>
 
-                    <!-- รูปภาพเดิม -->
                     <div class="mb-3">
-                        <label class="form-label">รูปภาพเดิม</label><br>
-                        <img src="uploads/<?= $promotion['image'] ?>" width="200" class="rounded border">
-                    </div>
+    <label class="form-label">รูปภาพเดิม</label><br>
+
+    <?php if (!empty($promotion['image'])): ?>
+        <img 
+            src="../../<?= htmlspecialchars($promotion['image']) ?>" 
+            width="220"
+            class="rounded border shadow-sm"
+            alt="Promotion Image"
+        >
+    <?php else: ?>
+        <div class="text-muted">ไม่มีรูปภาพ</div>
+    <?php endif; ?>
+</div>
 
                     <!-- อัปโหลดรูปใหม่ -->
                     <div class="mb-3">
