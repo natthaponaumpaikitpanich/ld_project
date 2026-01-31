@@ -1,0 +1,75 @@
+.waiting-card{
+    background:#fff;
+    width:100%;
+    max-width:460px;
+    border-radius:26px;
+    padding:32px;
+    text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.35);
+    animation:fadeIn .4s ease;
+}
+
+.waiting-icon{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#1e3c72,#2a5298);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    margin:0 auto 16px;
+}
+
+.plan-name{
+    color:#1e3c72;
+    font-weight:600;
+}
+
+.slip-box{
+    margin:20px 0;
+    position:relative;
+    display:inline-block;
+}
+
+.slip-box img{
+    width:200px;
+    border-radius:16px;
+    border:1px solid #eee;
+}
+
+.slip-label{
+    position:absolute;
+    bottom:8px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,.7);
+    color:#fff;
+    font-size:12px;
+    padding:4px 10px;
+    border-radius:20px;
+}
+
+.status-box{
+    margin-top:18px;
+    background:#f1f5ff;
+    color:#1e3c72;
+    padding:14px;
+    border-radius:14px;
+    font-size:14px;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:scale(.95)}
+    to{opacity:1;transform:scale(1)}
+}
+#subscription-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.75);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:99999;
+}

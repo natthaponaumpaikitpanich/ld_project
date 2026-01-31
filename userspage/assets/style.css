@@ -1,0 +1,65 @@
+body {
+    font-family: 'Kanit', sans-serif;
+    background: #f6f7fb;
+}
+
+/* ===== APP BAR ===== */
+.appbar {
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    padding: 12px 0;
+    z-index: 10;
+}
+
+.profile-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
+}
+
+/* ===== HERO ===== */
+.hero {
+    background: linear-gradient(135deg,#1e3c72,#2a5298);
+    border-radius: 22px;
+}
+
+.hero h5 {
+    font-weight: 600;
+}
+
+/* ===== PROMOTION ===== */
+.carousel-item img {
+    height: 160px;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
+.promo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px;
+    background: linear-gradient(to top, rgba(0,0,0,.6), transparent);
+    color: #fff;
+    border-radius: 0 0 18px 18px;
+}
+
+/* ===== MENU ===== */
+.card-menu {
+    background: #fff;
+    border-radius: 20px;
+    border: none;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,.08);
+    transition: .25s ease;
+}
+
+.card-menu:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(0,0,0,.12);
+}

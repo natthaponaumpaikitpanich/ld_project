@@ -100,28 +100,78 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>สร้างคำสั่งซัก</title>
+<title>สร้างคำสั่งซัก | Laundry Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="../../../image/3.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+
 <style>
-body{font-family:'Kanit',sans-serif}
+body{
+    font-family:'Kanit',sans-serif;
+    background:#f6f7fb;
+}
+
+/* CARD */
+.order-card{
+    border-radius:22px;
+    border:none;
+    box-shadow:0 15px 35px rgba(0,0,0,.1);
+}
+
+/* HEADER */
+.order-header{
+    background:linear-gradient(135deg,#1e3c72,#2a5298);
+    color:#fff;
+    border-radius:22px 22px 0 0;
+    padding:24px;
+    text-align:center;
+}
+
+/* FORM */
+.form-control,.form-select{
+    border-radius:12px;
+}
+
+.form-control:focus,.form-select:focus{
+    border-color:#2a5298;
+    box-shadow:0 0 0 .2rem rgba(42,82,152,.25);
+}
+
+/* BUTTON */
+.btn-main{
+    background:#2a5298;
+    color:#fff;
+    border-radius:14px;
+    font-weight:500;
+}
+
+.btn-main:hover{
+    background:#1e3c72;
+}
 </style>
 </head>
-<body class="bg-light">
 
-<div class="container py-5">
-<div class="col-md-6 mx-auto">
+<body>
 
-<div class="card shadow">
+<div class="container py-4">
+<div class="col-lg-6 mx-auto">
+
+<div class="card order-card">
+
+<!-- HEADER -->
+<div class="order-header">
+    <h5 class="fw-semibold mb-1">🧺 สั่งให้มารับผ้า</h5>
+    <small class="opacity-75">กรอกข้อมูลเพื่อสร้างคำสั่งซัก</small>
+</div>
+
 <div class="card-body p-4">
-
-<h4 class="fw-bold mb-3 text-center">🧺 สั่งให้มารับผ้า</h4>
 
 <?php if ($success): ?>
 <div class="alert alert-success text-center">
-    สร้างคำสั่งซักสำเร็จ 🎉
+    🎉 สร้างคำสั่งซักสำเร็จแล้ว
 </div>
 <?php endif; ?>
 
@@ -133,11 +183,11 @@ body{font-family:'Kanit',sans-serif}
 </div>
 <?php endif; ?>
 
-<form method="post">
+<form method="post" id="orderForm">
 
-<!-- store -->
+<!-- STORE -->
 <div class="mb-3">
-<label class="form-label">🏪 ร้านซัก</label>
+<label class="form-label">🏪 เลือกร้านซัก</label>
 <select name="store_id" class="form-select" required>
 <option value="">เลือกร้าน</option>
 <?php foreach($stores as $s): ?>
@@ -148,32 +198,38 @@ body{font-family:'Kanit',sans-serif}
 </select>
 </div>
 
-<!-- address -->
+<!-- ADDRESS -->
 <div class="mb-3">
 <label class="form-label">📍 ที่อยู่รับผ้า</label>
 <textarea name="pickup_address" id="pickup_address"
-class="form-control" rows="3" required></textarea>
+class="form-control" rows="3"
+placeholder="กรอกที่อยู่ให้ละเอียด เช่น บ้านเลขที่ ซอย จุดสังเกต"
+required></textarea>
 </div>
 
-<!-- gps -->
+<!-- GPS -->
 <input type="hidden" name="lat" id="lat">
 <input type="hidden" name="lng" id="lng">
 
 <div class="mb-3 text-center">
-<button type="button" onclick="getLocation()"
-class="btn btn-outline-success btn-sm">
+<button type="button"
+        onclick="getLocation()"
+        class="btn btn-outline-success btn-sm">
 📡 ใช้ตำแหน่งปัจจุบัน
 </button>
 <div id="gpsStatus" class="small text-muted mt-1"></div>
 </div>
 
-<!-- notes -->
-<div class="mb-3">
-<label class="form-label">📝 หมายเหตุ</label>
-<textarea name="notes" class="form-control" rows="2"></textarea>
+<!-- NOTES -->
+<div class="mb-4">
+<label class="form-label">📝 หมายเหตุถึงร้าน (ถ้ามี)</label>
+<textarea name="notes"
+class="form-control"
+rows="2"
+placeholder="เช่น ผ้าขาวแยกซัก, ผ้าเด็ก"></textarea>
 </div>
 
-<button class="btn btn-primary w-100">
+<button class="btn btn-main w-100 py-2" id="submitBtn">
 ยืนยันคำสั่งซัก
 </button>
 
@@ -181,12 +237,15 @@ class="btn btn-outline-success btn-sm">
 
 </div>
 </div>
-<a href="../../index.php">
-<button class="btn btn-warning mt-3">
-กลับหน้าหลัก
-</button></a>
+
+<a href="../../index.php" class="btn btn-outline-secondary mt-3 w-100">
+← กลับหน้าหลัก
+</a>
+
 </div>
 </div>
+
+<script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script>
 function getLocation(){
@@ -194,15 +253,27 @@ function getLocation(){
         alert("อุปกรณ์ไม่รองรับ GPS");
         return;
     }
+
+    gpsStatus.innerText = "กำลังขอพิกัด...";
     navigator.geolocation.getCurrentPosition(
         pos=>{
             lat.value = pos.coords.latitude;
             lng.value = pos.coords.longitude;
             gpsStatus.innerText = "✔️ ได้รับพิกัดแล้ว";
         },
-        ()=> alert("ไม่สามารถเข้าถึงตำแหน่งได้")
+        ()=>{
+            gpsStatus.innerText = "❌ ไม่สามารถเข้าถึงตำแหน่งได้";
+        }
     );
 }
+
+/* loading button */
+const form = document.getElementById('orderForm');
+const btn = document.getElementById('submitBtn');
+form.addEventListener('submit',()=>{
+    btn.innerText = 'กำลังสร้างคำสั่งซัก...';
+    btn.disabled = true;
+});
 </script>
 
 </body>

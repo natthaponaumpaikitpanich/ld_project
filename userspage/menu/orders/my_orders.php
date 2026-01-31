@@ -18,7 +18,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([':customer_id' => $customer_id]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* ---------- logs (ทีเดียว) ---------- */
+/* ---------- logs ---------- */
 $orderIds = array_column($orders, 'id');
 $logsByOrder = [];
 
@@ -37,7 +37,7 @@ if ($orderIds) {
     }
 }
 
-/* ---------- helpers ---------- */
+/* helpers */
 function status_label($status) {
     return match($status) {
         'created'=>'รอร้านรับงาน',
@@ -66,14 +66,74 @@ function status_icon($status) {
 <head>
 <meta charset="UTF-8">
 <title>คำสั่งซักของฉัน</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Kanit',sans-serif;
+    background:#f6f7fb;
+}
+.step .label{
+    margin-left: 30px;
+    padding-top: 2px;
+    font-size: 15px;
+}
+.order-card{
+    border-radius:20px;
+    border:none;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+
+.timeline{
+    position:relative;
+    padding-left:30px;
+}
+
+.timeline::before{
+    content:'';
+    position:absolute;
+    left:10px;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:#dee2e6;
+}
+
+.step{
+    position:relative;
+    margin-bottom:16px;
+}
+
+.step i{
+    position:absolute;
+    left:-2px;
+    top:2px;
+    font-size:18px;
+}
+
+.step.done i{
+    color:#2a5298;
+}
+
+.step.done .label{
+    font-weight:500;
+}
+
+.step.pending{
+    color:#adb5bd;
+}
+</style>
 </head>
 
-<body class="bg-light">
-<div class="container py-5">
+<body>
 
-<h3 class="fw-bold mb-4">🧺 คำสั่งซักของฉัน</h3>
+<div class="container py-4">
+
+<h4 class="fw-bold mb-4">🧺 คำสั่งซักของฉัน</h4>
 
 <?php foreach ($orders as $order): ?>
 <?php
@@ -81,37 +141,44 @@ $shown = $logsByOrder[$order['id']] ?? [];
 $all_status = ['created','picked_up','in_process','ready','out_for_delivery','completed'];
 ?>
 
-<div class="card mb-4 shadow-sm">
-<div class="card-body">
+<div class="card order-card mb-4">
+<div class="card-body p-4">
 
-<div class="d-flex justify-content-between mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h5 class="fw-bold"><?= htmlspecialchars($order['store_name']) ?></h5>
+        <div class="fw-semibold"><?= htmlspecialchars($order['store_name']) ?></div>
         <small class="text-muted"><?= $order['order_number'] ?></small>
     </div>
-    <span class="badge bg-primary">
+    <span class="badge bg-primary rounded-pill md-3">
         <?= status_label($order['status']) ?>
     </span>
 </div>
 
-<?php foreach ($all_status as $st): ?>
-<div class="d-flex align-items-center mb-2 <?= in_array($st,$shown)?'':'text-muted' ?>">
-    <i class="bi <?= status_icon($st) ?> me-2"></i>
-    <?= status_label($st) ?>
-</div>
+<div class="timeline">
+<?php foreach ($all_status as $st): 
+    $done = in_array($st,$shown);
+?>
+    <div class="step <?= $done?'done':'pending' ?>">
+        <i class="bi <?= status_icon($st) ?>"></i>
+        <div class="label"><?= status_label($st) ?></div>
+    </div>
 <?php endforeach; ?>
+</div>
 
 <div class="text-end mt-3">
-<a href="menu/orders/order_detail.php?id=<?= $order['id'] ?>"
-   class="btn btn-outline-primary rounded-pill">
-ดูรายละเอียด
-</a>
+    <a href="menu/orders/order_detail.php?id=<?= $order['id'] ?>"
+       class="btn btn-outline-primary rounded-pill">
+        ดูรายละเอียด
+    </a>
 </div>
 
 </div>
 </div>
+
 <?php endforeach; ?>
 
 </div>
+
 </body>
 </html>
+ 

@@ -27,79 +27,114 @@ $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ติดต่อร้าน</title>
+<title>ติดต่อร้าน | Laundry Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="../../../image/3.jpg">
+
 <style>
-.store-card {
-    border-radius:16px;
-    transition:.2s;
+body{
+    font-family:'Kanit',sans-serif;
+    background:#f6f7fb;
 }
-.store-card:hover {
-    transform: translateY(-3px);
+
+/* CARD */
+.store-card{
+    border-radius:20px;
+    border:none;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+    transition:.25s ease;
+}
+.store-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+/* STORE ICON */
+.store-avatar{
+    width:46px;
+    height:46px;
+    border-radius:12px;
+    background:#2a5298;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
 }
 </style>
 </head>
 
-<body class="bg-light">
+<body>
 
 <div class="container py-4">
 
-<h4 class="fw-bold mb-3">💬 ติดต่อร้านซัก</h4>
+<h5 class="fw-semibold mb-4">💬 ติดต่อร้านซัก</h5>
 
 <?php if (!$stores): ?>
-    <div class="alert alert-info">
-        คุณยังไม่เคยใช้บริการร้านซัก
-    </div>
+<div class="alert alert-info text-center">
+    คุณยังไม่เคยใช้บริการร้านซัก
+</div>
 <?php endif; ?>
 
 <?php foreach ($stores as $s): ?>
-<div class="card store-card shadow-sm mb-3">
-<div class="card-body">
+<div class="card store-card mb-3">
+<div class="card-body d-flex justify-content-between align-items-center">
 
-    <h6 class="fw-bold mb-1">
-        🏪 <?= htmlspecialchars($s['name']) ?>
-    </h6>
-    <div class="text-muted small mb-3">
-        <?= htmlspecialchars($s['address']) ?>
-    </div>
-
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="d-flex gap-3 align-items-center">
+        <div class="store-avatar">
+            🏪
+        </div>
+        <div>
+            <div class="fw-semibold"><?= htmlspecialchars($s['name']) ?></div>
+            <small class="text-muted">
+                <?= htmlspecialchars($s['address']) ?>
+            </small>
+             <div class="d-flex gap-2 flex-wrap">
 
         <?php if ($s['phone']): ?>
         <a href="tel:<?= $s['phone'] ?>"
-           class="btn btn-outline-primary btn-sm">
+           class="btn btn-outline-primary btn-sm rounded-pill">
            📞 โทร
-        </a>
-        <?php endif; ?>
-
-        <?php if (!empty($s['line_id'])): ?>
-        <a href="https://line.me/R/ti/p/~<?= htmlspecialchars($s['line_id']) ?>"
-           target="_blank"
-           class="btn btn-outline-success btn-sm">
-           💬 LINE
         </a>
         <?php endif; ?>
 
         <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($s['address']) ?>"
            target="_blank"
-           class="btn btn-outline-secondary btn-sm">
-           📍 แผนที่ร้าน
+           class="btn btn-outline-secondary btn-sm rounded-pill">
+           📍 แผนที่
         </a>
 
     </div>
+        </div>
+    </div>
+
+   
 
 </div>
 </div>
 <?php endforeach; ?>
 
-<a href="../../index.php" class="btn btn-outline-secondary mt-3">
-← กลับ
+<a href="../../index.php" class="btn btn-outline-secondary rounded-pill w-100 mt-3">
+← กลับหน้าหลัก
 </a>
 
 </div>
 
 <script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* tap animation */
+document.querySelectorAll('.store-card').forEach(card=>{
+    card.addEventListener('click',()=>{
+        card.style.transform='scale(.98)';
+        setTimeout(()=>card.style.transform='',120);
+    });
+});
+</script>
+
 </body>
 </html>

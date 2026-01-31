@@ -231,7 +231,9 @@ foreach ($steps as $s):
 <?php else: ?>
 <div class="alert alert-secondary mb-2">ยังไม่ได้ชำระเงิน</div>
 <form method="post" onsubmit="return confirm('ยืนยันรับเงินสดแล้ว?')">
-<button name="cash_paid" class="btn btn-success">💵 รับเงินสด</button>
+    <div class="">
+<button name="cash_paid" class="btn text-white mt-4" style="margin-left:91.6%; background-color:#198754;">💵 รับเงินสด</button>
+</div>
 </form>
 <?php endif ?>
 </div>
@@ -242,7 +244,7 @@ foreach ($steps as $s):
 <div class="card mb-3 shadow-sm">
 <div class="card-body text-center">
 <h6 class="fw-bold mb-2">🗺️ นำทางไปยังลูกค้า</h6>
-<button class="btn btn-success w-100"
+<button class="btn btn-success"
 onclick="navigateTo(
 <?= $pickup['lat'] ?? 'null' ?>,
 <?= $pickup['lng'] ?? 'null' ?>,
@@ -260,17 +262,20 @@ onclick="navigateTo(
 <!-- ===== NEXT STATUS ===== -->
 <?php if ($next = next_status($order['status'])): ?>
 <form method="post" onsubmit="return confirm('ไปขั้นถัดไป?')">
+    <a href="../../index.php?link=orders" class="btn btn-outline-secondary py-2 " style="margin-right:73.9%;">
+← กลับหน้าออเดอร์
+</a>
 <input type="hidden" name="next_status" value="<?= $next ?>">
-<button class="btn btn-primary w-100 py-2">
+<button class="btn text-white py-2" style="background-color: #1e3c72;">
 ➡️ ไปขั้นถัดไป (<?= label($next) ?>)
 </button>
+
 </form>
 <?php endif ?>
 
-<a href="../../index.php?link=orders" class="btn btn-outline-secondary mt-3">
-← กลับหน้าออเดอร์
-</a>
 
+
+</div>
 </div>
 
 <script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
