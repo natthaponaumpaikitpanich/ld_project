@@ -1,41 +1,64 @@
 <?php
+include_once '../../ld_db.php';
 $link = $_GET['link'] ?? 'Dashboard';
 ?>
 
-<!-- ===== SIDEBAR (อยู่นอก content) ===== -->
-<?php include_once "sidebar/sidebar.php"; ?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <style>
+        /* CSS ตัวเดิมที่คุณมี (ที่ผมปรับให้ข้างบน) ใส่ตรงนี้ */
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 85px;
+            --transition-speed: 0.4s;
+        }
+        body { margin: 0; background: #f8fafc; font-family: 'Kanit', sans-serif; }
+        
+        .main-content {
+            margin-left: var(--sidebar-width); /* เว้นที่ให้ Sidebar */
+            padding: 24px;
+            transition: all var(--transition-speed) ease;
+        }
+        .main-content.collapsed {
+            margin-left: var(--sidebar-collapsed-width); /* ยุบตาม Sidebar */
+        }
+    </style>
+</head>
+<body>
 
-<!-- ===== CONTENT AREA ===== -->
-<div id="mainContent" class="main-content">
-<?php
+    <?php include_once "sidebar/sidebar.php"; ?>
 
-if ($link == 'Dashboard') {
-    include_once "sidebar/Dashboard.php";
-}
-elseif ($link == 'promotion') {
-    include_once "../promotion/index.php";
-}
-elseif ($link == 'allstore') {
-    include_once "stores/index.php";
-}
-elseif ($link == 'setting') {
-    include_once "billing/plan.php";
-}
-elseif ($link == 'payments') {
-    include_once "billing/payments.php";
-}
-elseif ($link == 'overdue') {
-    include_once "billing/overdue.php";
-}
-elseif ($link == 'transactions') {
-    include_once "system/transactions.php";
-}
-elseif ($link == 'reports') {
-    include_once "system/store_report.php";
-}
-else {
-    include_once "sidebar/Dashboard.php";
-}
+    <div id="mainContent" class="main-content">
+        <?php
+        // Logic การเลือกหน้า
+        switch($link) {
+            case 'promotion':    include "../promotion/index.php"; break;
+            case 'allstore':     include "stores/index.php"; break;
+            case 'setting':      include "billing/plan.php"; break;
+            case 'payments':     include "billing/payments.php"; break;
+            case 'overdue':      include "billing/overdue.php"; break;
+            case 'transactions': include "system/transactions.php"; break;
+            case 'reports':      include "system/store_report.php"; break;
+            default:             include "sidebar/Dashboard.php"; break;
+        }
+        ?>
+    </div>
 
-?>
-</div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("mainContent");
+            sidebar.classList.toggle("collapsed");
+            mainContent.classList.toggle("collapsed");
+            localStorage.setItem("sidebarStatus", sidebar.classList.contains("collapsed") ? "closed" : "open");
+        }
+        
+        // เช็คสถานะตอนโหลดหน้า
+        if (localStorage.getItem("sidebarStatus") === "closed") {
+            document.getElementById("sidebar").classList.add("collapsed");
+            document.getElementById("mainContent").classList.add("collapsed");
+        }
+    </script>
+</body>
+</html>

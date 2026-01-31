@@ -60,7 +60,7 @@ switch ($user['role']) {
         $_SESSION['store_id']   = $store['id'];
         $_SESSION['store_name'] = $store['name'];
 
-        header("Location: ../storepage/index.php");
+        header("Location: ../storepage/index.php?link=orders");
         exit;
 
     case 'staff':

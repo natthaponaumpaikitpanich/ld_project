@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ===== upload qr =====
     $qr_path = null;
     if (!empty($_FILES['qr_image']['name'])) {
-
+        // ปรับ Path ให้สัมพันธ์กับตำแหน่งไฟล์จริง
         $dir = __DIR__ . '/uploads/';
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
@@ -45,170 +45,276 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>สร้างแพ็กเกจใหม่ | Management</title>
 
-<title>สร้างแพ็กเกจรายเดือน</title>
+    <link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../bootstrap/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="../../../bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="icon" href="../../../image/3.jpg">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
 
-<style>
-body {
-    background:#f4f6f9;
-    font-family:'Kanit',sans-serif;
-}
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Anuphan', sans-serif;
+            color: #1e293b;
+        }
 
-/* main layout */
-.main-wrapper {
-    max-width: 900px;
-    margin: 40px auto;
-}
+        .main-wrapper {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
 
-/* card */
-.card {
-    border-radius: 18px;
-}
+        /* Card Setup */
+        .premium-card {
+            background: var(--glass-bg);
+            border: none;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
 
-/* section title */
-.section-title {
-    font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 6px;
-}
+        /* Sidebar in Card (Info) */
+        .info-panel {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 40px;
+            height: 100%;
+        }
 
-.section-desc {
-    font-size: 14px;
-    color: #64748b;
-}
+        /* Form Styling */
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 8px;
+        }
 
-/* preview */
-.qr-preview {
-    width: 160px;
-    height: 160px;
-    border-radius: 12px;
-    border: 2px dashed #cbd5e1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-    font-size: 14px;
-    overflow: hidden;
-}
+        .form-control {
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
 
-.qr-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
+        .form-control:focus {
+            background-color: #fff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
 
-/* footer */
-.form-footer {
-    background: #f8fafc;
-    padding: 16px;
-    border-top: 1px solid #e5e7eb;
-    border-radius: 0 0 18px 18px;
-}
-</style>
+        /* QR Preview Container */
+        .qr-upload-box {
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-upload-box:hover {
+            border-color: #6366f1;
+            background: #f5f7ff;
+        }
+
+        #qrPreview img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        /* Floating Live Preview Card (Visual Only) */
+        .live-preview-label {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 2px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 14px 30px;
+            border-radius: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-cancel {
+            border-radius: 14px;
+            padding: 14px 20px;
+            font-weight: 600;
+            color: #64748b;
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="main-wrapper">
+    <a href="../sidebar.php?link=setting" class="text-decoration-none text-muted mb-4 d-inline-block">
+        <i class="bi bi-arrow-left-short fs-4"></i> ย้อนกลับไปหน้ารายการ
+    </a>
 
-<div class="card shadow-sm border-0">
+    <div class="card premium-card">
+        <div class="row g-0">
+            <div class="col-lg-4 d-none d-lg-block">
+                <div class="info-panel d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="mb-4">
+                            <i class="bi bi-rocket-takeoff-fill" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">สร้างแพ็กเกจใหม่</h3>
 
-    <!-- HEADER -->
-    <div class="card-header bg-primary text-white py-3">
-        <h4 class="mb-0">💳 สร้างแพ็กเกจพรีเมียม</h4>
-        <small>สำหรับร้านซักอบรีดที่เช่าระบบของแพลตฟอร์ม</small>
-    </div>
-
-    <!-- BODY -->
-    <div class="card-body px-4 py-4">
-
-        <form method="post" enctype="multipart/form-data" class="row g-4">
-
-            <!-- BASIC INFO -->
-            <div class="col-12">
-                <div class="section-title">ข้อมูลแพ็กเกจ</div>
-                <div class="section-desc">ข้อมูลพื้นฐานที่ร้านค้าจะเห็น</div>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">ชื่อแพ็กเกจ</label>
-                <input type="text" name="name" class="form-control" required>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">ราคาแสดง (บาท)</label>
-                <input type="number" name="price" class="form-control" required>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label">ยอดโอนจริง (บาท)</label>
-                <input type="number" name="amount" class="form-control" required>
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">รายละเอียด / สิทธิ์ที่ได้รับ</label>
-                <textarea name="duration" rows="3" class="form-control"
-                    placeholder="เช่น ใช้งานระบบได้ 30 วัน, รองรับ 5 เครื่อง, มีรายงาน"></textarea>
-            </div>
-
-            <!-- QR -->
-            <div class="col-12">
-                <div class="section-title">การชำระเงิน</div>
-                <div class="section-desc">QR สำหรับร้านค้าใช้โอนค่าสมัคร</div>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">อัปโหลด QR Code</label>
-                <input type="file" name="qr_image" class="form-control" accept="image/*" required>
-            </div>
-
-            <div class="col-md-6 d-flex align-items-end">
-                <div class="qr-preview" id="qrPreview">
-                    ตัวอย่าง QR
+                    </div>
+                    
+                    <div class="mt-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <small>ระบบตรวจสอบยอดอัตโนมัติ</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                                <i class="bi bi-lightning"></i>
+                            </div>
+                            <small>เปิดใช้งานทันทีหลังโอน</small>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- FOOTER -->
-            <div class="col-12 form-footer d-flex justify-content-between align-items-center mt-4">
-                <a href="../sidebar.php?link=setting" class="btn btn-outline-secondary">
-                    ยกเลิก
-                </a>
-                <button class="btn btn-success px-4">
-                    <i class="bi bi-check-circle me-1"></i> บันทึกแพ็กเกจ
-                </button>
+            <div class="col-lg-8">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data">
+                        
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <h4 class="fw-bold mb-1">รายละเอียดระบบ</h4>
+                                <p class="text-muted small">กรอกข้อมูลแพ็กเกจที่คุณต้องการให้ลูกค้าเห็น</p>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">ชื่อแพ็กเกจ (เช่น Standard, Pro, Enterprise)</label>
+                                <input type="text" name="name" class="form-control" placeholder="ระบุชื่อที่น่าดึงดูด..." required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">ราคาตลาด (บาท/เดือน)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-tag"></i></span>
+                                    <input type="number" name="price" class="form-control border-start-0" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-danger">ยอดโอนจริง (บาท)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-cash-coin"></i></span>
+                                    <input type="number" name="amount" class="form-control border-start-0" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">รายละเอียด / สิทธิประโยชน์</label>
+                                <textarea name="duration" rows="3" class="form-control" 
+                                    placeholder="ใส่รายการแยกทีละบรรทัด เช่น&#10;- ใช้งานได้ 30 วัน&#10;"></textarea>
+                            </div>
+
+                            <div class="col-12 mt-5">
+                                <h4 class="fw-bold mb-1">ช่องทางชำระเงิน</h4>
+                                <p class="text-muted small">อัปโหลดภาพ QR Code เพื่อให้ลูกค้าสแกนได้ทันที</p>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="row align-items-center">
+                                    <div class="col-md-7">
+                                        <div class="qr-upload-box" onclick="document.getElementById('qrInput').click()">
+                                            <input type="file" name="qr_image" id="qrInput" class="d-none" accept="image/*" required>
+                                            <div id="uploadPlaceholder">
+                                                <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
+                                                <p class="mt-2 mb-0 fw-bold">คลิกเพื่ออัปโหลด QR Code</p>
+                                                <small class="text-muted">รองรับไฟล์ JPG, PNG</small>
+                                            </div>
+                                            <div id="qrPreview" class="d-none"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 mt-3 mt-md-0">
+                                        <div class="p-3 rounded-4" style="background: #fffbeb; border: 1px border #fde68a;">
+                                            <small class="text-warning-emphasis fw-bold d-block mb-1">
+                                                <i class="bi bi-exclamation-triangle"></i> คำแนะนำ
+                                            </small>
+                                            <small class="text-muted d-block" style="font-size: 0.8rem;">
+                                                ตรวจสอบภาพ QR ให้ชัดเจน และต้องมียอดโอนที่ตรงกับช่อง "ยอดโอนจริง" ด้านบน
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-5 pt-3 border-top d-flex flex-column flex-md-row justify-content-end gap-3">
+                                <a href="../sidebar.php?link=setting" class="btn btn-cancel">
+                                    ยกเลิก
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-submit px-5 text-white">
+                                    <i class="bi bi-plus-circle me-2"></i> บันทึกและเปิดใช้งาน
+                                </button>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
             </div>
-
-        </form>
-
+        </div>
     </div>
 </div>
 
-</div>
-
 <script>
-// QR preview
-const input = document.querySelector('input[name="qr_image"]');
-const preview = document.getElementById('qrPreview');
+    // QR Preview Script
+    const qrInput = document.getElementById('qrInput');
+    const qrPreview = document.getElementById('qrPreview');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
 
-input.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        preview.innerHTML = `<img src="${reader.result}">`;
-    };
-    reader.readAsDataURL(file);
-});
+    qrInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                qrPreview.innerHTML = `<img src="${event.target.result}" class="img-fluid">`;
+                qrPreview.classList.remove('d-none');
+                uploadPlaceholder.classList.add('d-none');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
 </script>
 
-<script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
