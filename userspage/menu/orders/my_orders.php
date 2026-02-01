@@ -60,125 +60,229 @@ function status_icon($status) {
         default=>'bi-clock'
     };
 }
+function status_color($status) {
+    return match($status) {
+        'ready' => '#00b894', // เขียวสดใสเมื่อเสร็จ
+        'out_for_delivery' => '#0984e3', // ฟ้าเข้มตอนส่ง
+        default => '#54a0ff' // ฟ้าปกติ
+    };
+}
 ?>
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<title>คำสั่งซักของฉัน</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<link href="../../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-body{
-    font-family:'Kanit',sans-serif;
-    background:#f6f7fb;
-}
-.step .label{
-    margin-left: 30px;
-    padding-top: 2px;
-    font-size: 15px;
-}
-.order-card{
-    border-radius:20px;
-    border:none;
-    box-shadow:0 12px 30px rgba(0,0,0,.08);
-}
+    :root {
+        --sky-blue: #f0f7ff;
+        --primary-blue: #54a0ff;
+        --glass-white: rgba(255, 255, 255, 0.9);
+        --text-dark: #2d3436;
+        --text-muted: #b2bec3;
+    }
 
-.timeline{
-    position:relative;
-    padding-left:30px;
-}
+    body {
+        background-color: var(--sky-blue);
+        font-family: 'Kanit', sans-serif;
+    }
 
-.timeline::before{
-    content:'';
-    position:absolute;
-    left:10px;
-    top:0;
-    bottom:0;
-    width:2px;
-    background:#dee2e6;
-}
+    /* หัวข้อหน้า */
+    .page-header {
+        padding: 20px 0;
+        color: var(--text-dark);
+    }
 
-.step{
-    position:relative;
-    margin-bottom:16px;
-}
+    /* การ์ด Order แบบใหม่ */
+    .order-card {
+        border: none;
+        border-radius: 25px;
+        background: var(--glass-white);
+        box-shadow: 0 10px 20px rgba(84, 160, 255, 0.08);
+        transition: transform 0.3s ease;
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
 
-.step i{
-    position:absolute;
-    left:-2px;
-    top:2px;
-    font-size:18px;
-}
+    .order-card:hover {
+        transform: translateY(-5px);
+    }
 
-.step.done i{
-    color:#2a5298;
-}
+    /* แถบสีด้านข้างสถานะ */
+    .status-indicator {
+        width: 6px;
+        height: 50px;
+        border-radius: 0 10px 10px 0;
+        background: var(--primary-blue);
+        position: absolute;
+        left: 0;
+        top: 25px;
+    }
 
-.step.done .label{
-    font-weight:500;
-}
+    /* Timeline แนวนอน (Stepper) */
+    .stepper-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 25px;
+        position: relative;
+    }
 
-.step.pending{
-    color:#adb5bd;
-}
+    .stepper-item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        z-index: 2;
+    }
+
+    /* เส้นเชื่อม Timeline */
+    .stepper-item::before {
+        position: absolute;
+        content: "";
+        border-bottom: 2px dashed #e0e0e0;
+        width: 100%;
+        top: 15px;
+        left: -50%;
+        z-index: 1;
+    }
+
+    .stepper-item:first-child::before { content: none; }
+
+    .step-counter {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #e0e0e0;
+        margin-bottom: 6px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+
+    .active .step-counter {
+        background-color: var(--primary-blue);
+        color: white;
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 10px rgba(84, 160, 255, 0.4);
+    }
+
+    .active .step-name {
+        color: var(--primary-blue);
+        font-weight: 500;
+    }
+
+    .step-name {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    /* ปุ่มรายละเอียด */
+    .btn-detail {
+        background: #fff;
+        color: var(--primary-blue);
+        border: 1.5px solid var(--primary-blue);
+        border-radius: 12px;
+        padding: 8px 20px;
+        font-size: 0.9rem;
+        transition: 0.3s;
+    }
+
+    .btn-detail:hover {
+        background: var(--primary-blue);
+        color: #fff;
+    }
+
+    /* สัญลักษณ์ "กำลังทำงาน" */
+    .pulse-blue {
+        animation: pulse-blue-animation 2s infinite;
+    }
+
+    @keyframes pulse-blue-animation {
+        0% { box-shadow: 0 0 0 0px rgba(84, 160, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(84, 160, 255, 0); }
+        100% { box-shadow: 0 0 0 0px rgba(84, 160, 255, 0); }
+    }
 </style>
-</head>
-
-<body>
 
 <div class="container py-4">
-
-<h4 class="fw-bold mb-4">🧺 คำสั่งซักของฉัน</h4>
-
-<?php foreach ($orders as $order): ?>
-<?php
-$shown = $logsByOrder[$order['id']] ?? [];
-$all_status = ['created','picked_up','in_process','ready','out_for_delivery','completed'];
-?>
-
-<div class="card order-card mb-4">
-<div class="card-body p-4">
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <div class="fw-semibold"><?= htmlspecialchars($order['store_name']) ?></div>
-        <small class="text-muted"><?= $order['order_number'] ?></small>
+    <div class="page-header d-flex align-items-center">
+        <div class="flex-grow-1">
+            <h4 class="fw-bold mb-1">ติดตามสถานะซักผ้า</h4>
+            <p class="text-muted small">เราจะดูแลผ้าของคุณให้ดีที่สุด 😊</p>
+        </div>
+        <div class="bg-white p-2 rounded-circle shadow-sm">
+            <i class="bi bi-funnel text-primary"></i>
+        </div>
     </div>
-    <span class="badge bg-primary rounded-pill md-3">
-        <?= status_label($order['status']) ?>
-    </span>
-</div>
 
-<div class="timeline">
-<?php foreach ($all_status as $st): 
-    $done = in_array($st,$shown);
-?>
-    <div class="step <?= $done?'done':'pending' ?>">
-        <i class="bi <?= status_icon($st) ?>"></i>
-        <div class="label"><?= status_label($st) ?></div>
+    <?php if (empty($orders)): ?>
+        <div class="text-center py-5">
+            <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" style="width: 120px; opacity: 0.5;">
+            <p class="mt-3 text-muted">ยังไม่มีรายการสั่งซักในขณะนี้</p>
+        </div>
+    <?php endif; ?>
+
+    <?php foreach ($orders as $order): ?>
+    <?php
+        $shown = $logsByOrder[$order['id']] ?? [];
+        $all_status = [
+            ['id' => 'created', 'label' => 'จองคิว', 'icon' => 'bi-receipt'],
+            ['id' => 'picked_up', 'label' => 'รับผ้า', 'icon' => 'bi-box-seam'],
+            ['id' => 'in_process', 'label' => 'กำลังซัก', 'icon' => 'bi-arrow-repeat'],
+            ['id' => 'ready', 'label' => 'เสร็จแล้ว', 'icon' => 'bi-check-circle'],
+            ['id' => 'out_for_delivery', 'label' => 'กำลังส่ง', 'icon' => 'bi-truck']
+        ];
+    ?>
+
+    <div class="card order-card">
+        <div class="status-indicator" style="background: <?= status_color($order['status']) ?>"></div>
+        <div class="card-body p-4">
+            
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h6 class="fw-bold mb-1" style="color: var(--text-dark);"><?= htmlspecialchars($order['store_name']) ?></h6>
+                    <span class="badge" style="background: var(--sky-blue); color: var(--primary-blue); font-weight: 400;">
+                        #<?= $order['order_number'] ?>
+                    </span>
+                </div>
+                <div class="text-end">
+                    <div class="small text-muted mb-1">สถานะปัจจุบัน</div>
+                    <span class="fw-bold" style="color: <?= status_color($order['status']) ?>">
+                        <?= status_label($order['status']) ?>
+                    </span>
+                </div>
+            </div>
+
+            <div class="stepper-wrapper">
+                <?php foreach ($all_status as $st): 
+                    $is_done = in_array($st['id'], $shown);
+                    $is_current = ($order['status'] == $st['id']);
+                ?>
+                <div class="stepper-item <?= $is_done || $is_current ? 'active' : '' ?>">
+                    <div class="step-counter <?= $is_current ? 'pulse-blue' : '' ?>">
+                        <i class="bi <?= $st['icon'] ?>"></i>
+                    </div>
+                    <div class="step-name"><?= $st['label'] ?></div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+
+            <hr class="my-4" style="border-top: 1px dashed #eee;">
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="bi bi-clock-history me-1"></i> อัปเดตล่าสุด: <?= date('H:i') ?> น.
+                </div>
+                <a href="menu/orders/order_detail.php?id=<?= $order['id'] ?>" class="btn btn-detail">
+                    รายละเอียด <i class="bi bi-chevron-right ms-1"></i>
+                </a>
+            </div>
+
+        </div>
     </div>
-<?php endforeach; ?>
+    <?php endforeach; ?>
 </div>
-
-<div class="text-end mt-3">
-    <a href="menu/orders/order_detail.php?id=<?= $order['id'] ?>"
-       class="btn btn-outline-primary rounded-pill">
-        ดูรายละเอียด
-    </a>
-</div>
-
-</div>
-</div>
-
-<?php endforeach; ?>
-
-</div>
-
-</body>
-</html>
- 

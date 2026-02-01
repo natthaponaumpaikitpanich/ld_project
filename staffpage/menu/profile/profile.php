@@ -94,156 +94,224 @@ if ($profile['profile_image']) {
 } else {
     $img_path = '/ld_project/assets/img/user.png';
 }
+$profile_img = ($profile['profile_image']) ? '/ld_project/' . ltrim($profile['profile_image'], '/') : '/ld_project/assets/img/user.png';
 ?>
+
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
-    <title>โปรไฟล์พนักงาน</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Profile | Smart Delivery</title>
     <link href="../../assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body {
-            background: #f4f6f9
+        :root {
+            --soft-blue: #eef2f7;
+            --brand-blue: #007bff;
+            --brand-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --glass: rgba(255, 255, 255, 0.95);
         }
 
-        .profile-wrapper {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center
+        body { background: var(--soft-blue); font-family: 'Kanit', sans-serif; color: #334155; }
+
+        .profile-container { min-height: 100vh; padding: 40px 15px; }
+
+        /* Main Card Design */
+        .glass-card {
+            background: var(--glass);
+            border: none;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.4s ease;
         }
 
-        .profile-card {
-            max-width: 900px;
-            width: 100%;
-            border-radius: 16px;
-            overflow: hidden
+        /* Header Visual */
+        .profile-cover {
+            height: 140px;
+            background: var(--brand-gradient);
+            position: relative;
         }
 
-        .profile-header {
-            background: linear-gradient(135deg, #0d6efd, #20c997);
-            color: #fff;
-            padding: 1.5rem 2rem
+        .avatar-wrapper {
+            position: relative;
+            margin-top: -70px;
+            display: inline-block;
+        }
+
+        .profile-img-big {
+            width: 140px; height: 140px;
+            object-fit: cover;
+            border: 5px solid #fff;
+            border-radius: 40px; /* Modern Squircle */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 8px; right: 8px;
+            width: 20px; height: 20px;
+            background: #22c55e;
+            border: 3px solid #fff;
+            border-radius: 50%;
+        }
+
+        /* Info Style */
+        .info-label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; text-transform: uppercase; }
+        .info-value { font-size: 1rem; color: #1e293b; font-weight: 600; }
+
+        .store-box {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        /* Form Styling */
+        .form-control {
+            border-radius: 12px;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            background: #fcfcfc;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(37, 117, 252, 0.1);
+            border-color: var(--brand-blue);
+        }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom File Input */
+        .file-upload-btn {
+            position: absolute;
+            bottom: 0; right: -10px;
+            background: #fff;
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            color: var(--brand-blue);
         }
     </style>
 </head>
 
 <body>
 
-    <div class="profile-wrapper">
-        <div class="card shadow profile-card">
-
-            <div class="profile-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0 fw-bold">👤 โปรไฟล์พนักงาน</h4>
-                <button onclick="enableEdit()" class="btn btn-light btn-sm fw-semibold">
-                    ✏️ แก้ไขโปรไฟล์
-                </button>
-            </div>
-
-            <div class="card-body p-4">
-
-                <!-- ================= VIEW MODE ================= -->
-                <div id="viewMode">
-                    <div class="row g-4 align-items-center">
-
-                        <div class="col-md-4 text-center">
-                            <img src="<?= htmlspecialchars($img_path) ?>"
-                                class="rounded-circle border border-4 border-white shadow mb-3"
-                                style="width:160px;height:160px;object-fit:cover;">
-                            <span class="badge rounded-pill px-3 py-2 bg-<?= $profile['status'] === 'active' ? 'success' : 'secondary' ?>">
-                                <?= strtoupper($profile['status']) ?>
-                            </span>
-                        </div>
-
-                        <div class="col-md-8">
-                            <h3 class="fw-bold mb-3"><?= htmlspecialchars($profile['display_name']) ?></h3>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-sm-6">
-                                    <div class="p-3 bg-light rounded">
-                                        <small class="text-muted">📧 อีเมล</small>
-                                        <div class="fw-semibold"><?= htmlspecialchars($profile['email']) ?></div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="p-3 bg-light rounded">
-                                        <small class="text-muted">📞 เบอร์โทร</small>
-                                        <div class="fw-semibold"><?= htmlspecialchars($profile['phone']) ?></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-3 rounded" style="background:#f8f9fa;border-left:4px solid #0d6efd;">
-                                <h6 class="fw-bold mb-2">🏪 ร้านที่สังกัด</h6>
-                                <div class="fw-semibold"><?= htmlspecialchars($profile['store_name']) ?></div>
-                                <div class="text-muted small"><?= htmlspecialchars($profile['store_address']) ?></div>
-                                <div class="small">☎ <?= htmlspecialchars($profile['store_phone']) ?></div>
-                            </div>
-                        </div>
-
-                    </div>
+<div class="container profile-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 mt-5">
+            
+            <div class="glass-card shadow-lg">
+                <div class="profile-cover d-flex align-items-end justify-content-end p-3">
+                    <button id="btnEdit" onclick="enableEdit()" class="btn btn-white btn-sm bg-white fw-bold rounded-pill px-3 shadow-sm">
+                        <i class="bi bi-pencil-square me-1"></i> แก้ไขข้อมูล
+                    </button>
                 </div>
 
-                <!-- ================= EDIT MODE ================= -->
-                <form id="editMode" method="post" enctype="multipart/form-data" style="display:none">
-                    <input type="hidden" name="update_profile" value="1">
-
-                    <div class="row g-4 align-items-center">
-
-                        <div class="col-md-4 text-center">
-                            <img src="<?= htmlspecialchars($img_path) ?>"
-                                class="rounded-circle border border-4 border-white shadow mb-3"
-                                style="width:160px;height:160px;object-fit:cover;">
-                            <input type="file" name="profile_image" class="form-control form-control-sm">
+                <div class="card-body px-4 pb-5">
+                    
+                    <div class="text-center mb-4">
+                        <div class="avatar-wrapper">
+                            <img id="previewImg" src="<?= htmlspecialchars($profile_img) ?>" class="profile-img-big animate__animated animate__zoomIn">
+                            <div class="status-dot"></div>
+                            <label for="profile_image_input" id="uploadCircle" class="file-upload-btn" style="display:none;">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
                         </div>
-
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label class="form-label small">ชื่อแสดงผล</label>
-                                <input type="text" name="display_name" class="form-control"
-                                    value="<?= htmlspecialchars($profile['display_name']) ?>" required>
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-sm-6">
-                                    <label class="form-label small">อีเมล</label>
-                                    <input type="email" name="email" class="form-control"
-                                        value="<?= htmlspecialchars($profile['email']) ?>" required>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label small">เบอร์โทร</label>
-                                    <input type="text" name="phone" class="form-control"
-                                        value="<?= htmlspecialchars($profile['phone']) ?>" required>
-                                </div>
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary">💾 บันทึก</button>
-                                <button type="button" onclick="cancelEdit()" class="btn btn-secondary">ยกเลิก</button>
-                            </div>
-                        </div>
-
+                        <h2 class="fw-bold mt-3 mb-1"><?= htmlspecialchars($profile['display_name']) ?></h2>
+                        <span class="badge bg-soft-primary text-primary rounded-pill px-3">พนักงานจัดส่งมืออาชีพ</span>
                     </div>
-                </form>
 
+                    <hr class="my-4 opacity-25">
+
+                    <div id="viewMode" class="fade-in">
+                        <div class="row g-4">
+                            <div class="col-md-6 text-start px-4">
+                                <div class="mb-4">
+                                    <div class="info-label"><i class="bi bi-envelope me-2"></i>อีเมลส่วนตัว</div>
+                                    <div class="info-value"><?= htmlspecialchars($profile['email']) ?></div>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="info-label"><i class="bi bi-telephone me-2"></i>เบอร์โทรศัพท์</div>
+                                    <div class="info-value"><?= htmlspecialchars($profile['phone']) ?></div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="store-box">
+                                    <h6 class="fw-bold text-primary mb-3"><i class="bi bi-shop me-2"></i>สาขาที่สังกัด</h6>
+                                    <div class="fw-bold text-dark mb-1"><?= htmlspecialchars($profile['store_name']) ?></div>
+                                    <p class="text-muted small mb-2"><?= htmlspecialchars($profile['store_address']) ?></p>
+                                    <div class="badge bg-white text-dark border shadow-sm">ID: <?= str_pad($user_id, 5, '0', STR_PAD_LEFT) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="editMode" method="post" enctype="multipart/form-data" style="display:none" class="fade-in">
+                        <input type="hidden" name="update_profile" value="1">
+                        <input type="file" id="profile_image_input" name="profile_image" hidden onchange="previewFile()">
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="info-label mb-2">ชื่อที่ใช้แสดงผล</label>
+                                <input type="text" name="display_name" class="form-control" value="<?= htmlspecialchars($profile['display_name']) ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="info-label mb-2">อีเมลติดต่อ</label>
+                                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($profile['email']) ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="info-label mb-2">เบอร์โทรศัพท์</label>
+                                <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($profile['phone']) ?>" required>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 d-flex gap-3 justify-content-center">
+                            <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold shadow-sm">บันทึกการเปลี่ยนแปลง</button>
+                            <button type="button" onclick="cancelEdit()" class="btn btn-outline-secondary px-4 rounded-pill">ยกเลิก</button>
+                        </div>
+                    </form>
+
+                </div>
             </div>
+
+            
+
         </div>
     </div>
+</div>
 
-    <script>
-        function enableEdit() {
-            viewMode.style.display = 'none';
-            editMode.style.display = 'block';
+<script>
+    function enableEdit() {
+        document.getElementById('viewMode').style.display = 'none';
+        document.getElementById('btnEdit').style.display = 'none';
+        document.getElementById('editMode').style.display = 'block';
+        document.getElementById('uploadCircle').style.display = 'flex';
+    }
+
+    function cancelEdit() {
+        location.reload(); // วิธีที่ง่ายที่สุดในการล้างค่า preview
+    }
+
+    function previewFile() {
+        const preview = document.getElementById('previewImg');
+        const file = document.querySelector('input[type=file]').files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function () {
+            preview.src = reader.result;
         }
 
-        function cancelEdit() {
-            editMode.style.display = 'none';
-            viewMode.style.display = 'block';
+        if (file) {
+            reader.readAsDataURL(file);
         }
-    </script>
+    }
+</script>
 
-    <script src="../../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
