@@ -290,27 +290,30 @@ $stores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                                     ?>
                                 </td>
 
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <?php if ($s['sub_status'] === 'waiting_approve'): ?>
-                                            <?php if ($s['slip_image']): ?>
-                                                <a href="/ld_project/<?= htmlspecialchars($s['slip_image']) ?>" target="_blank" class="btn-action btn-edit" title="ดูสลิป">
-                                                    <i class="bi bi-receipt"></i>
-                                                </a>
-                                            <?php endif; ?>
+<td class="text-center">
+    <div class="d-flex justify-content-center gap-2">
+        <?php if ($s['sub_status'] === 'waiting_approve'): ?>
+            <?php if ($s['slip_image']): ?>
+              <button type="button" 
+        class="btn-action btn-edit" 
+        title="ดูสลิป" 
+        onclick="viewSlip('/ld_project/<?= htmlspecialchars($s['slip_image']) ?>')">
+    <i class="bi bi-receipt"></i>
+</button>
+            <?php endif; ?>
 
-                                            <a href="billing/approve_action.php?id=<?= $s['sub_id'] ?>" class="btn-action btn-edit" onclick="return confirm('อนุมัติการสมัคร?')">
-                                                <i class="bi bi-check2-circle"></i> อนุมัติ
-                                            </a>
+            <a href="billing/approve_action.php?id=<?= $s['sub_id'] ?>" class="btn-action btn-edit" onclick="return confirm('อนุมัติการสมัคร?')">
+                <i class="bi bi-check2-circle"></i> อนุมัติ
+            </a>
 
-                                            <a href="billing/approve_action.php?id=<?= $s['sub_id'] ?>" class="btn-action btn-delete" onclick="return confirm('ปฏิเสธการสมัคร?')">
-                                                <i class="bi bi-x-circle"></i> ปฏิเสธ
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-muted text-xs">ดำเนินการแล้ว</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
+            <a href="billing/approve_action.php?id=<?= $s['sub_id'] ?>" class="btn-action btn-delete" onclick="return confirm('ปฏิเสธการสมัคร?')">
+                <i class="bi bi-x-circle"></i> ปฏิเสธ
+            </a>
+        <?php else: ?>
+            <span class="text-muted text-xs">ดำเนินการแล้ว</span>
+        <?php endif; ?>
+    </div>
+</td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -319,7 +322,43 @@ $stores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <script src="/ld_project/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<div class="modal fade" id="slipModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 24px; border: none; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark pt-2 px-2"><i class="bi bi-image me-2 text-primary"></i>หลักฐานการโอนเงิน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="slipPreview" src="" class="img-fluid rounded-4 shadow-sm" alt="Slip" style="max-height: 75vh; border: 1px solid rgba(0,0,0,0.05);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // สร้าง instance ของ modal ไว้รอเลยตั้งแต่โหลดหน้าเว็บ
+    let myModal;
+    document.addEventListener('DOMContentLoaded', function() {
+        myModal = new bootstrap.Modal(document.getElementById('slipModal'));
+    });
+
+    function viewSlip(imageUrl) {
+        if (!imageUrl || imageUrl.includes('undefined')) {
+            alert('ไม่พบไฟล์รูปภาพ');
+            return;
+        }
+        
+        const preview = document.getElementById('slipPreview');
+        preview.src = imageUrl;
+        
+        // สั่งโชว์ modal
+        myModal.show();
+    }
+</script>
 </body>
 
 </html>

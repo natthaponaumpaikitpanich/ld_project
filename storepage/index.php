@@ -330,8 +330,12 @@ $total_users = (int)$userStmt->fetchColumn();
             </div>
 
             <div class="bg-white p-4 rounded-4 shadow-sm">
-                <?php include "body.php"; ?>
-            </div>
+    <?php include "body.php"; ?>
+</div>
+
+<div id="main-content" class="bg-white p-4 rounded-4 shadow-sm">
+    <?php include "body.php"; ?>
+</div>
 
         </div>
     </div>
@@ -361,6 +365,24 @@ $total_users = (int)$userStmt->fetchColumn();
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+        // ตรวจสอบว่าใน URL มี parameter "link" หรือไม่
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('link')) {
+            // ค้นหา element ที่เราตั้ง id ไว้
+            const contentDiv = document.getElementById('main-content');
+            
+            if (contentDiv) {
+                // สั่งให้วิ่งลงไปแบบนุ่มนวล (smooth)
+                // offset เล็กน้อยเพื่อให้ไม่ติดขอบบนเกินไป
+                const yOffset = -20; 
+                const y = contentDiv.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+                window.scrollTo({top: y, behavior: 'smooth'});
+            }
+        }
+    });
         function openReportModal() {
             reportModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';

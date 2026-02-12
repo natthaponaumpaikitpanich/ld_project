@@ -206,9 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="profile-header-gradient">
     <div class="container text-center pt-4">
-        <a href="../../index.php" class="btn-back float-start text-white opacity-75">
-            <i class="bi bi-chevron-left"></i> กลับ
-        </a>
+       
         <h4 class="text-white fw-bold">ข้อมูลส่วนตัว</h4>
     </div>
 </div>

@@ -201,6 +201,160 @@ body {
     background: #d63031;
     color: white;
 }
+/* --- เพิ่มลูกเล่นพื้นหลังและแสงเงา --- */
+body {
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* วงกลมแสงฟุ้งๆ ด้านหลัง (ทำให้หน้าดูไม่จืด) */
+body::before {
+    content: "";
+    position: fixed;
+    top: -10%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0, 97, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+    z-index: -1;
+}
+
+/* --- Card Hover Effect แบบนุ่มนวล --- */
+.stat-card {
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+    border-color: var(--primary-blue) !important;
+}
+
+/* --- ลิฟต์เมนู (Quick Buttons) ให้ดูมีมิติ --- */
+.quick-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-btn::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.quick-btn:active::after {
+    width: 200%;
+    height: 200%;
+}
+
+/* --- Animation เมื่อโหลดหน้าครั้งแรก --- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card, .quick-btn, .glass-header, .carousel {
+    animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ให้ลำดับการแสดงผลต่างกันนิดนึง (Stagger) */
+.col-lg-4:nth-child(1) .stat-card { animation-delay: 0.1s; }
+.col-lg-4:nth-child(2) .stat-card { animation-delay: 0.2s; }
+.col-lg-4:nth-child(3) .stat-card { animation-delay: 0.3s; }
+
+/* --- ตกแต่ง Carousel ให้ดูพรีเมียม --- */
+.carousel-item img {
+    transition: transform 10s linear;
+}
+.carousel-item.active img {
+    transform: scale(1.15);
+}
+/* --- Dark Mode Variables --- */
+body.dark-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+}
+
+/* ส่วนหัวและ Header */
+body.dark-mode .glass-header {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .glass-header h3, 
+body.dark-mode .glass-header .text-muted {
+    color: #ffffff !important;
+}
+
+/* สถิติด้านบน (Stat Cards) ให้มืดลงได้เพราะเป็นข้อมูลโชว์ */
+body.dark-mode .stat-card:not([style*="linear-gradient"]) {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+/* --- จุดสำคัญ: ส่วน body.php --- */
+/* เราจะให้พื้นหลังของกรอบ body มืด แต่ข้างในคงเดิม */
+body.dark-mode #main-content {
+    background: #1e293b !important; /* พื้นหลังกรอบใหญ่สีเข้ม */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ยกเว้น (Reset) ทุกอย่างข้างใน #main-content ให้ใช้สีเดิมเหมือนโหมดสว่าง */
+/* สิ่งนี้จะทำให้พวก Input, Table, Textbox ที่ถูก include มา ไม่โดนสีมืดกลืน */
+body.dark-mode #main-content * {
+    background-color: transparent; /* ให้โปร่งแสงเห็นพื้นหลังการ์ด */
+}
+
+/* ถ้าคุณอยากให้พวกช่อง Input ยังเป็นสีขาวเหมือนเดิมเป๊ะๆ ให้ล็อคไว้แบบนี้ */
+body.dark-mode #main-content input, 
+body.dark-mode #main-content select, 
+body.dark-mode #main-content textarea,
+body.dark-mode #main-content .table,
+body.dark-mode #main-content .card {
+    background-color: #ffffff !important;
+    color: #212529 !important; /* ตัวหนังสือสีเข้มเหมือนเดิม */
+}
+
+/* ปุ่มเมนู Quick Buttons ให้คงสีขาวไว้จะได้เด่น */
+body.dark-mode .quick-btn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--deep-blue) !important;
+}
+
+/* ปรับหัวข้อเมนูให้สว่างขึ้น */
+body.dark-mode h5.fw-bold {
+    color: #ffffff !important;}
+/* ปุ่มสลับโหมด (ลอย) */
+.dark-mode-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 97, 255, 0.3);
+    z-index: 100000;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dark-mode-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+}
 </style>
 
 <div class="container py-3">
@@ -286,8 +440,104 @@ body {
             </a>
         </div>
     </div>
-
-    <div class="mt-4">
-        <?php include_once "body.php"; ?>
-    </div>
+<div id="main-content" class="bg-white p-4 rounded-4 shadow-sm mt-4">
+   <div class="bg-white p-4 rounded-4 shadow-sm mt-4">
+    <?php include "body.php"; ?>
+ </div>
 </div>
+
+
+</div>
+<div class="dark-mode-toggle" onclick="toggleDarkMode()" title="สลับโหมดกลางคืน">
+    <i class="bi bi-moon-stars-fill" id="dark-icon"></i>
+</div>
+<script>
+    // 1. ฟังก์ชันทำให้ตัวเลขวิ่ง (Counter Up)
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            obj.innerHTML = value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // --- ส่วนที่ 1: วิ่งลงไปที่เนื้อหา (ตามที่คุณต้องการ) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('link')) {
+            const contentDiv = document.getElementById('main-content'); // อย่าลืมใส่ id="main-content" ที่ div ครอบ body.php
+            if (contentDiv) {
+                setTimeout(() => {
+                    contentDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 500);
+            }
+        }
+
+        // --- ส่วนที่ 2: เลขวิ่ง (Counter) ---
+        // ค้นหาตัวเลขรายได้ (ต้องเป็น class หรือ id ที่ระบุเจาะจง)
+        // เพื่อความแม่นยำ ผมแนะนำให้เติม id="today-income-display" ใน h2 ของรายได้ครับ
+        const todayIncomeEl = document.getElementById('today-income-display');
+        const monthIncomeEl = document.getElementById('month-income-display');
+        
+        if(todayIncomeEl) {
+            const val = parseFloat(todayIncomeEl.innerText.replace(/,/g, ''));
+            animateValue(todayIncomeEl, 0, val, 1500);
+        }
+        if(monthIncomeEl) {
+            const val = parseFloat(monthIncomeEl.innerText.replace(/,/g, ''));
+            animateValue(monthIncomeEl, 0, val, 2000);
+        }
+    });
+
+    // 2. ฟังก์ชัน Modal เดิมของคุณ
+    function openReportModal() {
+        reportModal.style.display = 'flex';
+        reportModal.style.opacity = '0';
+        setTimeout(() => { reportModal.style.opacity = '1'; }, 10);
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeReportModal() {
+        reportModal.style.opacity = '0';
+        setTimeout(() => { 
+            reportModal.style.display = 'none'; 
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+    // ตรวจสอบโหมดที่บันทึกไว้เมื่อโหลดหน้าจอ
+    const currentMode = localStorage.getItem('theme');
+    if (currentMode === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateIcon(true);
+    }
+
+    function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        
+        // บันทึกค่าลง LocalStorage
+        if (isDark) {
+            localStorage.setItem('theme', 'dark');
+            updateIcon(true);
+        } else {
+            localStorage.setItem('theme', 'light');
+            updateIcon(false);
+        }
+    }
+
+    function updateIcon(isDark) {
+        const icon = document.getElementById('dark-icon');
+        if (isDark) {
+            icon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            icon.style.color = '#ffcc00';
+        } else {
+            icon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+            icon.style.color = '#ffffff';
+        }
+    }
+</script>

@@ -32,38 +32,44 @@ if ($store_id) {
         font-family: 'Kanit', sans-serif;
     }
 
-    /* ----- PREMIUM CARD ----- */
+    /* ----- PREMIUM CARD (MODIFIED) ----- */
     .sub-card {
         background: rgba(255, 255, 255, 0.95);
         width: 100%;
         max-width: 500px;
+        max-height: 90vh; /* จำกัดความสูงไม่ให้เกินหน้าจอ */
+        overflow-y: auto; /* ให้เลื่อนขึ้นลงได้ภายในตัว */
         border-radius: 40px;
-        padding: 45px;
+        padding: 40px;
         text-align: center;
         box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
         animation: cardAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         position: relative;
-        overflow: hidden;
+    }
+
+    /* ตกแต่ง Scrollbar ให้ดูสวยงาม */
+    .sub-card::-webkit-scrollbar {
+        width: 6px;
+    }
+    .sub-card::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sub-card::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
     }
 
     @keyframes cardAppear {
-        from {
-            opacity: 0;
-            transform: translateY(40px) scale(0.9);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+        from { opacity: 0; transform: translateY(40px) scale(0.9); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ----- WAITING APPROVE UI (THE "ALANGKAR" PART) ----- */
+    /* ----- WAITING APPROVE UI ----- */
     .status-ocean {
         position: relative;
-        width: 140px;
-        height: 140px;
-        margin: 0 auto 30px;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
     }
 
     .wave-circle {
@@ -76,128 +82,123 @@ if ($store_id) {
         animation: wave-ping 3s infinite;
     }
 
-    .wave-circle:nth-child(2) {
-        animation-delay: 1s;
-    }
-
     .icon-box-3d {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
         background: linear-gradient(135deg, #3b82f6, #2563eb);
-        border-radius: 30px;
-        margin: 20px auto;
+        border-radius: 25px;
+        margin: 10px auto;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 3rem;
+        font-size: 2.5rem;
         color: white;
-        box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.5);
-        transform: rotate(-5deg);
+        box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.5);
         animation: float 4s ease-in-out infinite;
         position: relative;
         z-index: 5;
     }
 
     @keyframes float {
-
-        0%,
-        100% {
-            transform: translateY(0) rotate(-5deg);
-        }
-
-        50% {
-            transform: translateY(-15px) rotate(5deg);
-        }
+        0%, 100% { transform: translateY(0) rotate(-5deg); }
+        50% { transform: translateY(-10px) rotate(5deg); }
     }
 
     @keyframes wave-ping {
-        0% {
-            transform: scale(1);
-            opacity: 0.2;
-        }
-
-        100% {
-            transform: scale(1.8);
-            opacity: 0;
-        }
+        0% { transform: scale(1); opacity: 0.2; }
+        100% { transform: scale(1.6); opacity: 0; }
     }
 
     .plan-badge {
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
-        padding: 8px 20px;
+        padding: 6px 16px;
         border-radius: 100px;
         font-weight: 600;
         color: #475569;
         display: inline-block;
         margin-bottom: 15px;
+        font-size: 0.9rem;
     }
 
+    /* ----- SLIP PREVIEW (MODIFIED) ----- */
     .slip-container-premium {
         perspective: 1000px;
-        margin: 25px 0;
+        margin: 20px 0;
     }
 
     .slip-preview-premium {
-        width: 160px;
-        border-radius: 20px;
+        width: 140px; /* ลดขนาดลงเล็กน้อย */
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 15px;
         transform: rotateY(-10deg) rotateX(5deg);
-        box-shadow: 20px 20px 50px rgba(0, 0, 0, 0.15);
+        box-shadow: 15px 15px 40px rgba(0, 0, 0, 0.15);
         transition: 0.5s;
-        border: 4px solid white;
-    }
-
-    .slip-preview-premium:hover {
-        transform: rotateY(0) rotateX(0) scale(1.1);
+        border: 3px solid white;
     }
 
     /* ----- FORMS & INPUTS ----- */
     .form-label {
         font-weight: 600;
         color: #1e293b;
-        margin-left: 10px;
+        margin-left: 5px;
+        font-size: 0.95rem;
     }
 
-    .form-select,
-    .form-control {
-        border-radius: 20px;
-        padding: 15px 25px;
+    .form-select, .form-control {
+        border-radius: 15px;
+        padding: 12px 20px;
         border: 2px solid #f1f5f9;
         background: #f8fafc;
         font-weight: 500;
         transition: all 0.3s;
     }
 
-    .form-select:focus {
-        border-color: #3b82f6;
-        background: #fff;
-        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1);
-    }
-
     .amount-display {
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-radius: 25px;
-        padding: 25px;
-        margin: 25px 0;
+        border-radius: 20px;
+        padding: 15px;
+        margin: 20px 0;
         border: 1px dashed #3b82f6;
+    }
+
+    .amount-display h2 {
+        font-size: 1.8rem;
+    }
+
+    /* ขนาด QR Code */
+    #planQR {
+        width: 150px; 
+        height: 150px; 
+        object-fit: contain;
+    }
+
+    /* รูปสลิปที่ User เลือก (Preview) */
+    #imgPreview {
+        max-width: 180px; /* จำกัดขนาดรูปสลิปตอนเลือกไฟล์ */
+        margin: 0 auto;
+        display: block;
+        border-radius: 10px;
+        border: 2px solid #3b82f6;
     }
 
     .btn-premium {
         background: linear-gradient(135deg, #2563eb, #1e40af);
         color: white;
         border: none;
-        padding: 20px;
-        border-radius: 22px;
+        padding: 16px;
+        border-radius: 18px;
         font-weight: 700;
         width: 100%;
-        box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);
+        box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);
         transition: all 0.3s;
+        margin-top: 10px;
     }
 
     .btn-premium:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 25px 50px -10px rgba(37, 99, 235, 0.5);
-        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.5);
     }
 </style>
 

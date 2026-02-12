@@ -126,6 +126,84 @@ $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
         display: inline-block;
         margin-bottom: 8px;
     }
+    .dark-mode-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 97, 255, 0.3);
+    z-index: 100000;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dark-mode-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+}
+/* --- Dark Mode ปรับปรุงใหม่ (มืดเฉพาะโครงสร้าง) --- */
+body.dark-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+}
+
+/* ส่วนหัวและ Header */
+body.dark-mode .glass-header {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .glass-header h3, 
+body.dark-mode .glass-header .text-muted {
+    color: #ffffff !important;
+}
+
+/* สถิติด้านบน (Stat Cards) ให้มืดลงได้เพราะเป็นข้อมูลโชว์ */
+body.dark-mode .stat-card:not([style*="linear-gradient"]) {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+/* --- จุดสำคัญ: ส่วน body.php --- */
+/* เราจะให้พื้นหลังของกรอบ body มืด แต่ข้างในคงเดิม */
+body.dark-mode #main-content {
+    background: #1e293b !important; /* พื้นหลังกรอบใหญ่สีเข้ม */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ยกเว้น (Reset) ทุกอย่างข้างใน #main-content ให้ใช้สีเดิมเหมือนโหมดสว่าง */
+/* สิ่งนี้จะทำให้พวก Input, Table, Textbox ที่ถูก include มา ไม่โดนสีมืดกลืน */
+body.dark-mode #main-content * {
+    background-color: transparent; /* ให้โปร่งแสงเห็นพื้นหลังการ์ด */
+}
+
+/* ถ้าคุณอยากให้พวกช่อง Input ยังเป็นสีขาวเหมือนเดิมเป๊ะๆ ให้ล็อคไว้แบบนี้ */
+body.dark-mode #main-content input, 
+body.dark-mode #main-content select, 
+body.dark-mode #main-content textarea,
+body.dark-mode #main-content .table,
+body.dark-mode #main-content .card {
+    background-color: #ffffff !important;
+    color: #212529 !important; /* ตัวหนังสือสีเข้มเหมือนเดิม */
+}
+
+/* ปุ่มเมนู Quick Buttons ให้คงสีขาวไว้จะได้เด่น */
+body.dark-mode .quick-btn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--deep-blue) !important;
+}
+
+/* ปรับหัวข้อเมนูให้สว่างขึ้น */
+body.dark-mode h5.fw-bold {
+    color: #ffffff !important;
+}
 </style>
 
 <body>
@@ -192,7 +270,9 @@ $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 </div>
-
+<div class="dark-mode-toggle" onclick="toggleDarkMode()" title="สลับโหมดกลางคืน">
+    <i class="bi bi-moon-stars-fill" id="dark-icon"></i>
+</div>
 <script src="../../../bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -205,6 +285,35 @@ $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
             card.style.transform = 'translateY(-8px) scale(1)';
         });
     });
+    const currentMode = localStorage.getItem('theme');
+    if (currentMode === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateIcon(true);
+    }
+
+    function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        
+        // บันทึกค่าลง LocalStorage
+        if (isDark) {
+            localStorage.setItem('theme', 'dark');
+            updateIcon(true);
+        } else {
+            localStorage.setItem('theme', 'light');
+            updateIcon(false);
+        }
+    }
+
+    function updateIcon(isDark) {
+        const icon = document.getElementById('dark-icon');
+        if (isDark) {
+            icon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            icon.style.color = '#ffcc00';
+        } else {
+            icon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+            icon.style.color = '#ffffff';
+        }
+    }
 </script>
 
 </body>
