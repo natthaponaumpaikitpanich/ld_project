@@ -1,46 +1,92 @@
 <?php
-require "../../ld_db.php";
+session_start();
+require_once "../../ld_db.php";
 
-// Logic PHP เดิมทั้งหมด (ห้ามแก้)
-if (!isset($_GET['id'])) {
-    die("ไม่พบ ID โปรโมชั่น");
+// ตรวจสอบสิทธิ์ (อิงตามหน้า Create)
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'platform_admin') {
+    die('ไม่มีสิทธิ์เข้าถึง');
 }
+
+// 1. ดึงข้อมูลโปรโมชั่นเดิม
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    header("Location: ../sidebar/sidebar.php?link=promotion");
+    exit;
+}
+
 $id = $_GET['id'];
-$sql = "SELECT * FROM promotions WHERE id = ?";
-$stmt = $pdo->prepare($sql);
+$stmt = $pdo->prepare("SELECT * FROM promotions WHERE id = ?");
 $stmt->execute([$id]);
 $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$promotion) {
-    die("ไม่พบโปรโมชั่นนี้");
+    die("ไม่พบข้อมูลโปรโมชั่น");
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $title = $_POST["title"];
-    $discount = $_POST["discount"];
-    $start_date = $_POST["start_date"];
-    $end_date = $_POST["end_date"];
-    $status = $_POST["status"];
-    $old_image = $promotion["image"];
+// 2. ดึงรายชื่อร้านค้าสำหรับตัวเลือก Specific
+$stmtStores = $pdo->prepare("SELECT id, name FROM stores WHERE status = 'active' ORDER BY name");
+$stmtStores->execute();
+$stores = $stmtStores->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!empty($_FILES["image"]["name"])) {
-        $fileName = time() . "_" . basename($_FILES["image"]["name"]);
-        $targetPath = "uploads/" . $fileName;
-        if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetPath)) {
-            $image = $fileName;
-        } else {
-            $image = $old_image;
+// 3. Logic การอัปเดตข้อมูล
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $title           = trim($_POST['title']);
+    $summary         = trim($_POST['summary']);
+    $message         = trim($_POST['message']);
+    $discount        = (float)$_POST['discount'];
+    $discount_type   = $_POST['discount_type'];
+    $min_requirement = (int)$_POST['min_requirement'];
+    $audience        = $_POST['audience'];
+    $store_id        = ($audience === 'store_specific') ? $_POST['store_id'] : null;
+    $status          = $_POST['status'];
+    $start_date      = $_POST['start_date'];
+    $end_date        = $_POST['end_date'];
+    $imagePath       = $promotion['image'];
+
+    // จัดการรูปภาพ
+    if (!empty($_FILES['image']['name'])) {
+        $dir = "../../uploads/promotion/";
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
+
+        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('promo_') . '.' . $ext;
+
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $dir . $filename)) {
+            // ลบรูปเก่าถ้ามี
+            if (!empty($promotion['image']) && file_exists("../../" . $promotion['image'])) {
+                unlink("../../" . $promotion['image']);
+            }
+            $imagePath = "uploads/promotion/" . $filename;
         }
-    } else {
-        $image = $old_image;
     }
 
-    $updateSql = "UPDATE promotions SET title=?, discount=?, start_date=?, end_date=?, image=?, status=? WHERE id=?";
-    $stmt = $pdo->prepare($updateSql);
-    $stmt->execute([$title, $discount, $start_date, $end_date, $image, $status, $id]);
+    try {
+        $sql = "UPDATE promotions SET 
+                title=?, discount=?, discount_type=?, min_requirement=?, 
+                summary=?, message=?, audience=?, store_id=?, 
+                start_date=?, end_date=?, image=?, status=?, updated_at=NOW() 
+                WHERE id=?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $title,
+            $discount,
+            $discount_type,
+            $min_requirement,
+            $summary,
+            $message,
+            $audience,
+            $store_id,
+            $start_date,
+            $end_date,
+            $imagePath,
+            $status,
+            $id
+        ]);
 
-    header("Location: ../sidebar/sidebar.php?link=promotion&updated=1");
-    exit;
+        header("Location: ../sidebar/sidebar.php?link=promotion&updated=1");
+        exit;
+    } catch (PDOException $e) {
+        $error = "Error: " . $e->getMessage();
+    }
 }
 ?>
 
@@ -49,239 +95,201 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="../../image/3.jpg">
-    <title>แก้ไขโปรโมชั่น | Smart Editor</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+    <title>แก้ไขโปรโมชั่น - แพลตฟอร์ม</title>
     <style>
         :root {
-            --accent-color: #4361ee;
-            --bg-body: #f8f9fc;
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --bg-body: #f8fafc;
         }
 
         body {
             font-family: 'Kanit', sans-serif;
             background-color: var(--bg-body);
-            color: #333;
+            color: #1e293b;
         }
 
-        /* Hero Header */
-        .edit-header {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-            padding: 40px 0 100px 0;
-            margin-bottom: -60px;
+        .promo-container {
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
-        /* Glass Card */
-        .main-card {
-            border: none;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        .glass-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             overflow: hidden;
         }
 
-        .form-section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--accent-color);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .header-gradient {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 30px;
+            color: white;
         }
 
-        /* Form Styling */
         .form-label {
             font-weight: 500;
-            font-size: 0.9rem;
-            color: #64748b;
+            color: #475569;
         }
 
         .form-control,
         .form-select {
             border-radius: 12px;
-            padding: 12px 15px;
-            border: 1px solid #e2e8f0;
-            background-color: #fcfcfd;
-            transition: all 0.2s;
+            padding: 12px;
+            border: 1.5px solid #e2e8f0;
         }
 
-        .form-control:focus {
-            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
-            border-color: var(--accent-color);
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Image Preview Area */
-        .image-upload-wrapper {
-            position: relative;
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .upload-zone {
             border: 2px dashed #cbd5e1;
-            border-radius: 20px;
+            border-radius: 15px;
             padding: 20px;
             text-align: center;
-            transition: 0.3s;
-            background: #f8fafc;
-        }
-
-        .image-upload-wrapper:hover {
-            border-color: var(--accent-color);
+            cursor: pointer;
             background: #f1f5f9;
         }
 
-        #preview-img {
+        #imagePreview {
             max-width: 100%;
+            max-height: 200px;
             border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            margin-top: 15px;
         }
 
-        /* Floating Buttons */
-        .action-bar {
-            background: white;
-            padding: 20px;
-            border-top: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .btn-save {
-            background: var(--accent-color);
-            border: none;
-            padding: 12px 35px;
-            border-radius: 12px;
-            font-weight: 600;
-            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
-            transition: 0.3s;
-        }
-
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 25px rgba(67, 97, 238, 0.3);
-        }
-
-        .input-group-text {
-            background: white;
-            border-radius: 12px 0 0 12px;
-            border-right: none;
-        }
-
-        .has-icon .form-control {
-            border-left: none;
+        .hidden-select {
+            display: none;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="edit-header">
-        <div class="container">
-            <div class="d-flex align-items-center gap-3">
-                <a href="../sidebar/sidebar.php?link=promotion" class="btn btn-outline-light rounded-circle p-2" style="width: 45px; height: 45px;">
-                    <i class="bi bi-arrow-left"></i>
-                </a>
+    <div class="promo-container py-5 px-3">
+        <div class="glass-card">
+            <div class="header-gradient d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="fw-bold mb-0">แก้ไขข้อมูลโปรโมชั่น</h2>
-                    <p class="text-white-50 mb-0">ปรับแต่งรายละเอียดและตั้งค่าการแสดงผลของแคมเปญ</p>
+                    <h3 class="mb-1"><i class="bi bi-pencil-square me-2"></i> แก้ไขโปรโมชั่น</h3>
+                    <p class="mb-0 opacity-75">ID: <?= htmlspecialchars($id) ?></p>
                 </div>
+                <a href="../sidebar/sidebar.php?link=promotion" class="btn btn-light btn-sm rounded-pill px-3 fw-bold">กลับ</a>
             </div>
-        </div>
-    </div>
 
-    <div class="container mb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <form action="" method="POST" enctype="multipart/form-data" class="main-card card">
-                    <div class="card-body p-4 p-md-5">
+            <div class="card-body p-4 p-lg-5">
+                <form method="post" enctype="multipart/form-data" id="editForm">
 
-                        <div class="row g-4">
-                            <div class="col-md-7">
-                                <div class="form-section-title">
-                                    <i class="bi bi-info-circle-fill"></i> ข้อมูลพื้นฐาน
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label">ชื่อโปรโมชั่น / หัวข้อแคมเปญ</label>
-                                    <input type="text" name="title" class="form-control form-control-lg"
-                                        placeholder="เช่น ลดกระหน่ำซัมเมอร์เซฟ"
-                                        value="<?= htmlspecialchars($promotion['title']) ?>" required>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-sm-6">
-                                        <label class="form-label">ส่วนลด (%)</label>
-                                        <div class="input-group has-icon">
-                                            <span class="input-group-text"><i class="bi bi-percent"></i></span>
-                                            <input type="number" name="discount" class="form-control"
-                                                value="<?= $promotion['discount'] ?>" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label class="form-label">สถานะการใช้งาน</label>
-                                        <select name="status" class="form-select">
-                                            <option value="active" <?= $promotion['status'] === 'active' ? 'selected' : '' ?>>เปิดใช้งาน (Active)</option>
-                                            <option value="draft" <?= $promotion['status'] === 'draft' ? 'selected' : '' ?>>ฉบับร่าง (Draft)</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="form-section-title mt-5">
-                                    <i class="bi bi-calendar-event-fill"></i> กำหนดเวลาแคมเปญ
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-6 mb-3">
-                                        <label class="form-label">วันที่และเวลาเริ่ม</label>
-                                        <input type="datetime-local" name="start_date" class="form-control"
-                                            value="<?= $promotion['start_date'] ? date('Y-m-d\TH:i', strtotime($promotion['start_date'])) : '' ?>" required>
-                                    </div>
-                                    <div class="col-sm-6 mb-3">
-                                        <label class="form-label">วันที่และเวลาสิ้นสุด</label>
-                                        <input type="datetime-local" name="end_date" class="form-control"
-                                            value="<?= $promotion['end_date'] ? date('Y-m-d\TH:i', strtotime($promotion['end_date'])) : '' ?>" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-5">
-                                <div class="form-section-title">
-                                    <i class="bi bi-image-fill"></i> ภาพหน้าปกโปรโมชั่น
-                                </div>
-
-                                <div class="image-upload-wrapper">
-                                    <div id="image-container">
-                                        <?php if (!empty($promotion['image'])): ?>
-                                            <img src="../../<?= htmlspecialchars($promotion['image']) ?>" id="preview-img" alt="Current Image">
-                                        <?php else: ?>
-                                            <div class="py-5" id="no-image-placeholder">
-                                                <i class="bi bi-cloud-arrow-up text-muted" style="font-size: 3rem;"></i>
-                                                <p class="text-muted small">ยังไม่มีรูปภาพประกอบ</p>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <label for="image-input" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                            <i class="bi bi-camera me-1"></i> เปลี่ยนรูปภาพ
-                                        </label>
-                                        <input type="file" name="image" id="image-input" class="d-none" accept="image/*">
-                                        <p class="text-muted mt-2" style="font-size: 0.75rem;">แนะนำขนาด 1200x600px (JPG, PNG)</p>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="section-title"><i class="bi bi-info-circle"></i> ข้อมูลโปรโมชั่นและส่วนลด</div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-6">
+                            <label class="form-label">ชื่อโปรโมชั่น</label>
+                            <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($promotion['title']) ?>" required>
                         </div>
-
+                        <div class="col-lg-3">
+                            <label class="form-label">ประเภทส่วนลด</label>
+                            <select name="discount_type" class="form-select">
+                                <option value="percentage" <?= $promotion['discount_type'] == 'percentage' ? 'selected' : '' ?>>เปอร์เซ็นต์ (%)</option>
+                                <option value="fixed" <?= $promotion['discount_type'] == 'fixed' ? 'selected' : '' ?>>จำนวนเงินคงที่ (บาท)</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-3">
+                            <label class="form-label">ค่าส่วนลด</label>
+                            <input type="number" step="0.01" name="discount" class="form-control" value="<?= $promotion['discount'] ?>" required>
+                        </div>
+                        <div class="col-lg-6">
+                            <label class="form-label">เงื่อนไข: ใช้บริการขั้นต่ำ (ครั้ง)</label>
+                            <input type="number" name="min_requirement" class="form-control" value="<?= $promotion['min_requirement'] ?>">
+                        </div>
+                        <div class="col-lg-6">
+                            <label class="form-label">สรุปสั้นๆ (Summary)</label>
+                            <input type="text" name="summary" class="form-control" value="<?= htmlspecialchars($promotion['summary']) ?>">
+                        </div>
                     </div>
 
-                    <div class="action-bar">
-                        <a href="../sidebar/sidebar.php?link=promotion" class="btn btn-light text-muted px-4">ยกเลิก</a>
-                        <button type="submit" class="btn btn-primary btn-save px-5">
-                            <i class="bi bi-check2-circle me-2"></i> บันทึกการเปลี่ยนแปลง
+                    <div class="section-title"><i class="bi bi-bullseye"></i> กลุ่มเป้าหมายและสถานะ</div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">กลุ่มร้านค้า</label>
+                            <select name="audience" id="audienceSelect" class="form-select">
+                                <option value="stores" <?= $promotion['audience'] == 'stores' ? 'selected' : '' ?>>ทุกร้านค้า (Public)</option>
+                                <option value="store_specific" <?= $promotion['audience'] == 'store_specific' ? 'selected' : '' ?>>เฉพาะบางร้าน (Specific)</option>
+                            </select>
+                        </div>
+                        <div id="storeSelectWrapper" class="col-md-4 <?= $promotion['audience'] !== 'store_specific' ? 'hidden-select' : '' ?>">
+                            <label class="form-label">เลือกพาร์ทเนอร์</label>
+                            <select name="store_id" class="form-select">
+                                <option value="">-- เลือกชื่อร้าน --</option>
+                                <?php foreach ($stores as $s): ?>
+                                    <option value="<?= $s['id'] ?>" <?= $promotion['store_id'] == $s['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($s['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">สถานะ</label>
+                            <select name="status" class="form-select">
+                                <option value="active" <?= $promotion['status'] == 'active' ? 'selected' : '' ?>>เปิดใช้งาน</option>
+                                <option value="inactive" <?= $promotion['status'] == 'inactive' ? 'selected' : '' ?>>ปิดใช้งาน</option>
+                                <option value="draft" <?= $promotion['status'] == 'draft' ? 'selected' : '' ?>>ร่าง (Draft)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="section-title"><i class="bi bi-calendar-range"></i> รูปภาพและระยะเวลา</div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-lg-6">
+                            <label class="form-label">แบนเนอร์โปรโมชั่น (ปล่อยว่างหากไม่เปลี่ยน)</label>
+                            <div class="upload-zone" onclick="document.getElementById('imgInput').click()">
+                                <i class="bi bi-image fs-2 text-muted"></i>
+                                <p class="mb-0 text-muted small">คลิกเพื่อเปลี่ยนรูปภาพ</p>
+                                <input type="file" name="image" id="imgInput" class="d-none" accept="image/*">
+                                <?php if ($promotion['image']): ?>
+                                    <img id="imagePreview" src="../../<?= $promotion['image'] ?>" alt="Preview" style="display:block; margin: 10px auto;">
+                                <?php else: ?>
+                                    <img id="imagePreview" src="#" alt="Preview">
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">วันที่เริ่ม</label>
+                                <input type="datetime-local" name="start_date" class="form-control" value="<?= date('Y-m-d\TH:i', strtotime($promotion['start_date'])) ?>" required>
+                            </div>
+                            <div>
+                                <label class="form-label">วันที่สิ้นสุด</label>
+                                <input type="datetime-local" name="end_date" class="form-control" value="<?= date('Y-m-d\TH:i', strtotime($promotion['end_date'])) ?>" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title"><i class="bi bi-chat-left-text"></i> รายละเอียดเงื่อนไขเพิ่มเติม</div>
+                    <div class="mb-5">
+                        <textarea name="message" rows="4" class="form-control"><?= htmlspecialchars($promotion['message']) ?></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3">
+                        <button type="button" onclick="history.back()" class="btn btn-light rounded-pill px-4">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm fw-bold" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border:none;">
+                            <i class="bi bi-save me-2"></i> บันทึกการแก้ไข
                         </button>
                     </div>
                 </form>
@@ -289,41 +297,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
     </div>
 
-    <script src="../../bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ระบบ Live Preview รูปภาพ
-        const imageInput = document.getElementById('image-input');
-        const previewImg = document.getElementById('preview-img');
-        const container = document.getElementById('image-container');
+        // การแสดงผลร้านค้าเฉพาะราย (อิงตาม Create)
+        const audienceSelect = document.getElementById('audienceSelect');
+        const storeSelectWrapper = document.getElementById('storeSelectWrapper');
+        audienceSelect.addEventListener('change', function() {
+            storeSelectWrapper.classList.toggle('hidden-select', this.value !== 'store_specific');
+        });
 
-        imageInput.onchange = evt => {
-            const [file] = imageInput.files;
+        // Preview รูปภาพ (อิงตาม Create)
+        const imgInput = document.getElementById('imgInput');
+        const imagePreview = document.getElementById('imagePreview');
+        imgInput.addEventListener('change', function() {
+            const file = this.files[0];
             if (file) {
-                // สร้าง Element รูปใหม่ถ้าของเดิมไม่มี
-                if (!document.getElementById('preview-img')) {
-                    container.innerHTML = '<img src="" id="preview-img" alt="Preview">';
+                const reader = new FileReader();
+                reader.onload = e => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
                 }
-                document.getElementById('preview-img').src = URL.createObjectURL(file);
-
-                // ใส่ Animation เล็กน้อย
-                document.getElementById('preview-img').style.animation = "fadeIn 0.5s";
+                reader.readAsDataURL(file);
             }
-        }
+        });
+
+        // ตรวจสอบวันที่ (อิงตาม Create)
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            const start = new Date(document.querySelector('[name="start_date"]').value);
+            const end = new Date(document.querySelector('[name="end_date"]').value);
+            if (end <= start) {
+                e.preventDefault();
+                alert('❌ วันที่สิ้นสุดต้องอยู่หลังจากวันที่เริ่มเสมอครับ');
+            }
+        });
     </script>
-
-    <style>
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
 </body>
 
 </html>

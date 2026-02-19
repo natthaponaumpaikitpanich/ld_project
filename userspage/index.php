@@ -380,25 +380,36 @@ body.dark-mode h5.fw-bold {
         <div style="position:absolute; right: -20px; top: -10px; font-size: 100px; opacity: 0.1;">👕</div>
     </div>
 
-    <?php if ($promotions): ?>
+  <?php if ($promotions): ?>
     <div class="d-flex justify-content-between align-items-center mb-2 px-2">
         <h6 class="fw-bold m-0" style="color: var(--dark-text);">โปรโมชั่นสำหรับคุณ</h6>
-        <small style="color: var(--primary-blue);">ดูทั้งหมด</small>
+        <small style="color: var(--primary-blue); cursor: pointer;">ดูทั้งหมด</small>
     </div>
+    
     <div id="promoCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
         <div class="carousel-inner">
             <?php foreach ($promotions as $i => $p): ?>
             <div class="carousel-item <?= $i === 0 ? 'active' : '' ?>">
                 <div class="position-relative">
-                    <img src="../<?= htmlspecialchars($p['image']) ?>" class="d-block w-100" style="height: 160px; object-fit: cover;">
+                    <img src="../<?= htmlspecialchars($p['image']) ?>" class="d-block w-100">
+                    
                     <div class="promo-overlay position-absolute bottom-0 start-0 end-0 text-white">
-                        <div class="fw-bold small"><?= htmlspecialchars($p['title']) ?></div>
-                        <small style="font-size: 0.7rem; opacity: 0.8;"><?= htmlspecialchars($p['store_name']) ?></small>
+                        <div class="fw-bold" style="font-size: 1.1rem;"><?= htmlspecialchars($p['title']) ?></div>
+                        <small style="font-size: 0.8rem; opacity: 0.9;">
+                            <i class="bi bi-shop me-1"></i> <?= htmlspecialchars($p['store_name']) ?>
+                        </small>
                     </div>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
+        
+        <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
     </div>
     <?php endif; ?>
 
