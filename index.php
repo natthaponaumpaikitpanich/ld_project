@@ -30,6 +30,7 @@ if (isset($_SESSION['user_id'])) {
 <meta charset="UTF-8">
 <title>Laundry Delivery System</title>
 <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link rel="icon" href="image/3.jpg">
 <style>
 .hero {
     min-height: 100vh;

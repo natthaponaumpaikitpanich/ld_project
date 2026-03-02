@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Bangkok');
 session_start();
 require_once "../ld_db.php";
 
@@ -456,7 +457,44 @@ body.dark-mode h5.fw-bold {
     <?php include "body.php"; ?>
  </div>
 </div>
+<footer class="mt-5 pt-5 pb-4 bg-white border-top shadow-sm" style="border-radius: 40px 40px 0 0;">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <h5 class="fw-bold text-primary mb-3">Laundry Hub</h5>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-geo-alt-fill me-2"></i> 226 หมู่13 ตำบลบ้านต๋อมbr>อำเภอเมืองพะเยา จังหวัดพะเยา 56000
+                </p>
+                
+            </div>
 
+            <div class="col-lg-4">
+                <h5 class="fw-bold mb-3">ติดต่อสอบถาม</h5>
+                <div class="d-flex flex-column gap-2">
+                    <a href="tel:0643076672" class="text-decoration-none text-muted">
+                        <i class="bi bi-telephone-fill text-primary me-2"></i> 064-307-6672
+                    </a>
+                    <a href="mailto:support@laundryhub.com" class="text-decoration-none text-muted">
+                        <i class="bi bi-envelope-at-fill text-primary me-2"></i> laundryNattaphon@gmail.com
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4 text-center text-lg-end">
+                <h5 class="fw-bold mb-3">ติดตามเรา</h5>
+                <div class="d-flex justify-content-center justify-content-lg-end gap-3">
+                    <a href="#" class="btn btn-soft-blue rounded-circle p-2 px-3 text-primary"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="btn btn-soft-blue rounded-circle p-2 px-3 text-primary"><i class="bi bi-line"></i></a>
+                    <a href="#" class="btn btn-soft-blue rounded-circle p-2 px-3 text-primary"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4 text-muted">
+        <div class="text-center text-muted small">
+            © 2024 Laundry Hub System - All Rights Reserved. บริหารจัดการร้านซักอบรีดอย่างมืออาชีพ
+        </div>
+    </div>
+</footer>
 
 </div>
 <div class="dark-mode-toggle" onclick="toggleDarkMode()" title="สลับโหมดกลางคืน">

@@ -1,5 +1,5 @@
 <?php
-// 1. เริ่มต้น Session และตั้งค่า Timezone ให้ตรงกับ Database
+// 1. เริ่มต้น Session และตั้งค่า Timezone
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,7 +8,7 @@ date_default_timezone_set('Asia/Bangkok');
 $store_id = $_SESSION['store_id'] ?? null;
 $now = date('Y-m-d H:i:s');
 
-/* ===== 2. ตรวจสอบสถานะการสมัครสมาชิก (Subscription) ล่าสุด ===== */
+/* ===== 2. ตรวจสอบสถานะการสมัครสมาชิก ===== */
 $sub = null;
 if ($store_id) {
     try {
@@ -26,204 +26,336 @@ if ($store_id) {
     }
 }
 
-// หากอยู่ระหว่างรออนุมัติ ให้แสดงหน้า Waiting แล้วหยุด (Return) เพื่อไม่ให้โหลดส่วนที่เหลือ
+// กรณีรออนุมัติ: แสดงการ์ดขนาดเล็กกะทัดรัด
 if ($sub && $sub['status'] === 'waiting_approve'): ?>
     <div id="subscription-overlay">
-        <div class="sub-card">
-            <div class="status-ocean">
-                <div class="wave-circle"></div>
-                <div class="wave-circle"></div>
-                <div class="icon-box-3d">⌛</div>
+        <div class="sub-card-compact">
+            <div class="wait-header">
+                <div class="spinner-ring"></div>
+                <span class="wait-emoji">⏳</span>
             </div>
-            <h3 class="fw-bold text-dark mb-1">กำลังดำเนินการ</h3>
-            <p class="text-muted mb-4">เราได้รับข้อมูลการชำระเงินเรียบร้อยแล้ว</p>
-            <div class="plan-badge">
-                <i class="bi bi-box-seam me-2"></i> แพ็กเกจ: <?= htmlspecialchars($sub['plan']) ?>
+
+            <h4 class="fw-bold text-dark mt-3 mb-1">รอการยืนยัน</h4>
+            <p class="text-muted mb-4" style="font-size: 13px;">แอดมินกำลังตรวจสอบยอดโอนของคุณ</p>
+
+            <div class="mini-info-pill">
+                <i class="bi bi-box-seam me-2"></i>แพ็กเกจ: <?= htmlspecialchars($sub['plan']) ?>
             </div>
+
             <?php if (!empty($sub['slip_image'])): ?>
-                <div class="slip-container-premium text-center">
-                    <img src="../<?= htmlspecialchars($sub['slip_image']) ?>" class="slip-preview-premium">
+                <div class="mini-slip-section">
+                    <p class="small-label">หลักฐานการโอน</p>
+                    <div class="mini-slip-frame" onclick="window.open('../<?= htmlspecialchars($sub['slip_image']) ?>', '_blank')">
+                        <img src="../<?= htmlspecialchars($sub['slip_image']) ?>">
+                        <div class="mini-slip-hover"><i class="bi bi-zoom-in"></i></div>
+                    </div>
                 </div>
             <?php endif; ?>
-            <div class="p-4 rounded-4 bg-light text-start mb-4">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="spinner-grow spinner-grow-sm text-primary me-3"></div>
-                    <span class="fw-bold text-primary">แอดมินกำลังตรวจสอบความถูกต้อง</span>
+
+            <div class="admin-status-bar">
+                <div class="pulse-dot"></div>
+                <div class="text-start ms-3">
+                    <div class="fw-bold text-primary" style="font-size: 12px;">กำลังตรวจสอบข้อมูล...</div>
+                    <div class="text-muted" style="font-size: 10px;">เฉลี่ยไม่เกิน 1 ชม. (08:00 - 22:00)</div>
                 </div>
-                <small class="text-muted">ปกติจะใช้เวลาไม่เกิน 1 ชั่วโมง (ช่วงเวลาทำการ 08:00 - 22:00)</small>
             </div>
-            <button onclick="location.reload()" class="btn btn-outline-secondary w-100 rounded-4 py-3">
-                <i class="bi bi-arrow-clockwise me-2"></i> รีเฟรชหน้าจอ
+
+            <button onclick="location.reload()" class="btn-refresh-simple">
+                <i class="bi bi-arrow-clockwise me-1"></i> รีเฟรชสถานะ
             </button>
         </div>
     </div>
-<?php 
-return; // หยุดการทำงานของ PHP ในไฟล์นี้เพียงเท่านี้
-endif; 
+<?php
+    return;
+endif;
 
-/* ===== 3. ดึงข้อมูลแพ็กเกจ และ โปรโมชั่นที่ใช้งานได้ ===== */
+/* ===== 3. ดึงข้อมูลแพ็กเกจและโปรโมชั่น (หน้าปกติ) ===== */
 try {
-    // ดึงแพ็กเกจ (Billing Plans)
     $planStmt = $pdo->query("SELECT id, name, price, amount, qr_image FROM billing_plans WHERE status = 'active' ORDER BY price ASC");
     $plans = $planStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // ดึงโปรโมชั่น (Promotions) 
-    // เงื่อนไข: สถานะ Active, กลุ่มเป้าหมายเป็น Stores หรือ All, และอยู่ในช่วงวันที่ใช้งานได้
     $promoStmt = $pdo->prepare("
-        SELECT id, title, discount, discount_type 
+        SELECT id, title, discount, discount_type, is_flash_sale, usage_limit, used_count, end_date
         FROM promotions 
         WHERE status = 'active' 
-        AND (audience = 'stores' OR audience = 'all')
-        AND start_date <= ? 
-        AND end_date >= ?
+        AND (audience = 'stores' OR audience = 'all' OR store_id = ?)
+        AND start_date <= ? AND end_date >= ?
+        AND (usage_limit IS NULL OR used_count < usage_limit)
     ");
-    $promoStmt->execute([$now, $now]);
+    $promoStmt->execute([$store_id, $now, $now]);
     $available_promotions = $promoStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // --- ส่วน Debug สำหรับคุณ (ถ้าโปรไม่ขึ้น ให้เอา // หน้า print_r ออกเพื่อดูค่า) ---
-    // echo "<pre style='display:none;'>";
-    // print_r($available_promotions);
-    // echo "</pre>";
-
 } catch (PDOException $e) {
     die("Database Error: " . $e->getMessage());
 }
 ?>
 
 <style>
-    /* CSS ส่วนเดิมของคุณคงไว้ และเพิ่มส่วนตกแต่งราคาใหม่ */
+    /* บังคับให้อยู่กึ่งกลางหน้าจอเสมอ */
     #subscription-overlay {
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+        background: rgba(15, 23, 42, 0.9);
         backdrop-filter: blur(12px);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 99999;
-        padding: 20px;
+        z-index: 9999999;
+        padding: 15px;
         font-family: 'Kanit', sans-serif;
     }
 
-    .sub-card {
-        background: rgba(255, 255, 255, 0.95);
+    /* ปรับขนาดการ์ดให้กะทัดรัด (Compact) ไม่คับจอ */
+    .sub-card-compact {
+        background: #fff;
         width: 100%;
-        max-width: 500px;
-        max-height: 90vh;
-        overflow-y: auto;
-        border-radius: 40px;
-        padding: 40px;
+        max-width: 360px;
+        /* จำกัดความกว้างไว้ที่ 360px พอดีสายตามือถือและคอม */
+        border-radius: 30px;
+        padding: 30px 25px;
         text-align: center;
-        box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.5);
-        animation: cardAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        animation: cardAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .amount-display {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-radius: 20px;
-        padding: 20px;
-        margin: 20px 0;
-        border: 1px dashed #3b82f6;
+    /* หัวข้อหน้า Waiting */
+    .wait-header {
+        position: relative;
+        width: 65px;
+        height: 65px;
+        margin: 0 auto;
     }
 
-    .discount-line {
-        color: #059669;
+    .wait-emoji {
+        font-size: 30px;
+        position: relative;
+        z-index: 2;
+        line-height: 65px;
+    }
+
+    .spinner-ring {
+        position: absolute;
+        inset: 0;
+        border: 3px solid #f1f5f9;
+        border-top: 3px solid #2563eb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .mini-info-pill {
+        display: inline-block;
+        background: #eff6ff;
+        color: #1e40af;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 13px;
         font-weight: 600;
-        font-size: 0.9rem;
+        margin-bottom: 20px;
     }
 
-    .original-price {
-        text-decoration: line-through;
+    /* ปรับขนาดรูปสลิปให้เล็กลงมาก (Thumbnail style) */
+    .mini-slip-section {
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .small-label {
+        font-size: 10px;
         color: #94a3b8;
-        font-size: 0.9rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
     }
 
-    .btn-premium {
-        background: linear-gradient(135deg, #2563eb, #1e40af);
-        color: white;
-        border: none;
-        padding: 16px;
-        border-radius: 18px;
-        font-weight: 700;
+    .mini-slip-frame {
+        width: 110px;
+        height: 150px;
+        margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+        border: 1px solid #cbd5e1;
+    }
+
+    .mini-slip-frame img {
         width: 100%;
-        box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .mini-slip-hover {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
         transition: 0.3s;
     }
 
-    /* ... (CSS อื่นๆ คงเดิมตามที่คุณส่งมา) ... */
+    .mini-slip-frame:hover .mini-slip-hover {
+        opacity: 1;
+    }
+
+    .admin-status-bar {
+        background: #f1f5f9;
+        padding: 12px 16px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: #2563eb;
+        border-radius: 50%;
+        animation: blink 1s infinite;
+    }
+
+    .btn-refresh-simple {
+        width: 100%;
+        border: 1.5px solid #d1d5db;
+        background: #fff;
+        padding: 12px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .btn-refresh-simple:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+
+    /* CSS หน้าสมัครสมาชิก */
+    .amount-box-mini {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-radius: 18px;
+        padding: 15px;
+        margin: 15px 0;
+        border: 1px dashed #3b82f6;
+    }
+
+    .qr-container-mini {
+        background: white;
+        padding: 10px;
+        border-radius: 20px;
+        display: inline-block;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-submit-premium {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: #fff;
+        width: 100%;
+        padding: 14px;
+        border-radius: 16px;
+        border: none;
+        font-weight: 700;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    @keyframes cardAppear {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 </style>
 
 <div id="subscription-overlay">
-    <div class="sub-card">
-        <div class="mb-4">
-            <h3 class="fw-bold text-dark mb-2">เริ่มต้นใช้งานระบบ</h3>
-            <p class="text-muted">กรุณาเลือกแพ็กเกจและโปรโมชั่นเพื่อเปิดใช้งานร้านค้า</p>
+    <div class="sub-card-compact">
+        <div class="mb-3">
+            <h4 class="fw-bold text-dark mb-1">เปิดใช้งานระบบ</h4>
+            <p class="text-muted small">เลือกแพ็กเกจเพื่อเริ่มต้นจัดการร้านค้า</p>
         </div>
 
         <form method="post" action="menu/subscription/subscribe_action.php" enctype="multipart/form-data" id="subForm">
-
-            <div class="text-start mb-3">
-                <label class="form-label">เลือกแพ็กเกจ</label>
-                <select class="form-select form-select-lg" name="plan_id" id="planSelect" required>
-                    <option value="">-- คลิกเพื่อเลือกแพ็กเกจ --</option>
+            <div class="text-start mb-2">
+                <label class="small fw-bold ms-1">แพ็กเกจ</label>
+                <select class="form-select rounded-3 shadow-sm" name="plan_id" id="planSelect" required>
+                    <option value="">-- เลือกแพ็กเกจ --</option>
                     <?php foreach ($plans as $p): ?>
-                        <option value="<?= $p['id'] ?>"
-                            data-amount="<?= $p['amount'] ?>"
-                            data-qr="<?= htmlspecialchars($p['qr_image']) ?>">
-                            <?= htmlspecialchars($p['name']) ?> (<?= number_format($p['price'], 0) ?> บาท)
+                        <option value="<?= $p['id'] ?>" data-amount="<?= $p['amount'] ?>" data-qr="<?= htmlspecialchars($p['qr_image']) ?>">
+                            <?= htmlspecialchars($p['name']) ?> (<?= number_format($p['price'], 0) ?>.-)
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
-            <div class="text-start mb-4">
-                <label class="form-label">โปรโมชั่น/ส่วนลด</label>
-                <select class="form-select" name="promotion_id" id="promoSelect">
+            <div class="text-start mb-3">
+                <label class="small fw-bold ms-1">ส่วนลด</label>
+                <select class="form-select form-select-sm rounded-3" name="promotion_id" id="promoSelect">
                     <option value="" data-discount="0" data-type="fixed">ไม่ใช้โปรโมชั่น</option>
                     <?php foreach ($available_promotions as $promo): ?>
                         <option value="<?= $promo['id'] ?>"
                             data-discount="<?= $promo['discount'] ?>"
-                            data-type="<?= $promo['discount_type'] ?>">
-                            <?= htmlspecialchars($promo['title']) ?> (ลด <?= number_format($promo['discount']) ?><?= $promo['discount_type'] == 'percentage' ? '%' : '฿' ?>)
+                            data-type="<?= $promo['discount_type'] ?>"
+                            data-percent="<?= ($promo['usage_limit'] > 0) ? ($promo['used_count'] / $promo['usage_limit'] * 100) : 0 ?>">
+                            <?= ($promo['is_flash_sale'] ? '🔥 ' : '') . htmlspecialchars($promo['title']) ?>
+                            (-<?= number_format($promo['discount']) ?><?= $promo['discount_type'] == 'percentage' ? '%' : '฿' ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
-            <div id="planInfo" class="d-none">
-                <div class="amount-display">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted small">ราคาปกติ:</span>
-                        <span class="original-price" id="rawPrice">0 บาท</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted small">ส่วนลด:</span>
-                        <span class="discount-line" id="discountText">-0 บาท</span>
-                    </div>
-                    <hr class="my-2" style="border-style: dashed; border-color: #cbd5e1;">
+            <div id="planDetailArea" class="d-none">
+                <div class="amount-box-mini">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark">ยอดโอนสุทธิ:</span>
-                        <h2 class="fw-bold text-primary mb-0">฿<span id="planAmount">0</span></h2>
+                        <span class="small text-muted">ยอดสุทธิที่ต้องโอน:</span>
+                        <h3 class="fw-bold text-primary mb-0">฿<span id="finalAmt">0</span></h3>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <div style="background: white; display: inline-block; padding: 15px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                        <img id="planQR" src="" style="width: 180px; height: 180px; object-fit: contain;">
-                    </div>
-                    <p class="mt-3 text-muted small"><i class="bi bi-qr-code-scan me-2"></i> สแกนเพื่อชำระเงินตามยอดสุทธิ</p>
+                <div class="qr-container-mini mb-3">
+                    <img id="qrPreview" src="" style="width: 130px; height: 130px; object-fit: contain;">
                 </div>
 
-                <div class="text-start mb-4">
-                    <label class="form-label">อัปโหลดสลิปยืนยัน</label>
-                    <input type="file" name="slip_image" id="slipInput" class="form-control" accept="image/*" required>
-                    <div id="previewWrapper" style="display:none;" class="mt-3">
-                        <img id="imgPreview" src="#" style="width: 100%; border-radius: 15px; border: 2px solid #3b82f6;">
+                <div class="text-start mb-3">
+                    <label class="small fw-bold ms-1">แนบสลิป</label>
+                    <input type="file" name="slip_image" id="slipInput" class="form-control form-control-sm rounded-3" accept="image/*" required>
+                    <div id="filePreview" class="mt-2 text-center d-none">
+                        <div class="mini-slip-frame" style="width: 80px; height: 110px;">
+                            <img id="imgPre" src="">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-premium btn-lg" id="submitBtn">
+            <button type="submit" class="btn-submit-premium" id="btnSub">
                 ยืนยันการสมัครสมาชิก
             </button>
         </form>
@@ -231,65 +363,43 @@ try {
 </div>
 
 <script>
-    const selectPlan = document.getElementById('planSelect');
-    const selectPromo = document.getElementById('promoSelect');
-    const planInfo = document.getElementById('planInfo');
-    const rawPriceDisp = document.getElementById('rawPrice');
-    const discountDisp = document.getElementById('discountText');
-    const amountDisp = document.getElementById('planAmount');
-    const qrImg = document.getElementById('planQR');
-    const submitBtn = document.getElementById('submitBtn');
+    const pSel = document.getElementById('planSelect');
+    const prSel = document.getElementById('promoSelect');
+    const area = document.getElementById('planDetailArea');
 
-    function calculatePrice() {
-        const planOpt = selectPlan.selectedOptions[0];
-        const promoOpt = selectPromo.selectedOptions[0];
+    function updatePrice() {
+        const pOpt = pSel.selectedOptions[0];
+        const prOpt = prSel.selectedOptions[0];
 
-        if (!planOpt || !planOpt.value) {
-            planInfo.classList.add('d-none');
+        if (!pOpt.value) {
+            area.classList.add('d-none');
             return;
         }
 
-        // ค่าพื้นฐาน
-        let price = parseFloat(planOpt.dataset.amount);
-        let discountVal = parseFloat(promoOpt.dataset.discount);
-        let discountType = promoOpt.dataset.type;
-        let finalDiscount = 0;
+        let price = parseFloat(pOpt.dataset.amount);
+        let disc = parseFloat(prOpt.dataset.discount);
+        let type = prOpt.dataset.type;
+        let final = (type === 'percentage') ? (price - (price * disc / 100)) : (price - disc);
 
-        // คำนวณส่วนลด
-        if (discountType === 'percentage') {
-            finalDiscount = (price * discountVal) / 100;
-        } else {
-            finalDiscount = discountVal;
-        }
-
-        let netTotal = price - finalDiscount;
-        if (netTotal < 0) netTotal = 0;
-
-        // อัปเดต UI
-        rawPriceDisp.innerText = price.toLocaleString() + " บาท";
-        discountDisp.innerText = "-" + finalDiscount.toLocaleString() + " บาท";
-        amountDisp.innerText = netTotal.toLocaleString();
-        qrImg.src = '../adminpage/sidebar/' + planOpt.dataset.qr;
-
-        planInfo.classList.remove('d-none');
+        document.getElementById('finalAmt').innerText = Math.max(0, final).toLocaleString();
+        document.getElementById('qrPreview').src = '../adminpage/sidebar/' + pOpt.dataset.qr;
+        area.classList.remove('d-none');
     }
 
-    // เมื่อเปลี่ยนแพ็กเกจ หรือ เปลี่ยนโปรโมชั่น ให้คำนวณใหม่ทันที
-    selectPlan.addEventListener('change', calculatePrice);
-    selectPromo.addEventListener('change', calculatePrice);
+    pSel.addEventListener('change', updatePrice);
+    prSel.addEventListener('change', updatePrice);
 
-    // Preview รูปสลิป
-    document.getElementById('slipInput').onchange = evt => {
-        const [file] = evt.target.files;
+    document.getElementById('slipInput').onchange = e => {
+        const [file] = e.target.files;
         if (file) {
-            document.getElementById('imgPreview').src = URL.createObjectURL(file);
-            document.getElementById('previewWrapper').style.display = 'block';
+            document.getElementById('imgPre').src = URL.createObjectURL(file);
+            document.getElementById('filePreview').classList.remove('d-none');
         }
     }
 
-    // Loading ตอนกดส่ง
-    document.getElementById('subForm').addEventListener('submit', () => {
-        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> กำลังส่งข้อมูล...`;
-        submitBtn.disabled = true;
-    });
+    document.getElementById('subForm').onsubmit = () => {
+        const b = document.getElementById('btnSub');
+        b.disabled = true;
+        b.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>รอดำเนินการ...`;
+    }
 </script>

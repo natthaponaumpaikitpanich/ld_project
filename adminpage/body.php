@@ -39,7 +39,7 @@ $link = $_GET['link'] ?? 'Dashboard';
             case 'payments':     include "billing/payments.php"; break;
             case 'overdue':      include "billing/overdue.php"; break;
             case 'transactions': include "system/transactions.php"; break;
-            case 'reports':      include "system/store_report.php"; break;
+            case 'reports':      include "chat/admin_chat.php"; break;
             default:             include "sidebar/Dashboard.php"; break;
         }
         ?>

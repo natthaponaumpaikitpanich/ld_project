@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // ตั้งค่า Timezone
 date_default_timezone_set('Asia/Bangkok');
 
-// ดึงค่าจาก Session (แก้ปัญหา Undefined variable)
+// ดึงค่าจาก Session 
 $user_id = $_SESSION['user_id'] ?? null;
 $store_id = $_SESSION['store_id'] ?? null;
 
@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $start_date      = $_POST['start_date'];
         $end_date        = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
         $status          = $_POST['status'] ?? 'active';
+        // [เพิ่ม] รับค่า Flash Sale
+        $is_flash_sale   = isset($_POST['is_flash_sale']) ? 1 : 0;
 
         // จัดการรูปภาพ
         $image_path = $_POST['existing_image'] ?? null;
@@ -43,19 +45,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             if ($id) {
-                // UPDATE
-                $sql = "UPDATE promotions SET title=?, discount=?, discount_type=?, min_requirement=?, summary=?, message=?, start_date=?, end_date=?, status=?, image=? WHERE id=? AND store_id=?";
+                // UPDATE (เพิ่ม is_flash_sale)
+                $sql = "UPDATE promotions SET title=?, discount=?, discount_type=?, min_requirement=?, summary=?, message=?, start_date=?, end_date=?, status=?, image=?, is_flash_sale=? WHERE id=? AND store_id=?";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$title, $discount, $discount_type, $min_requirement, $summary, $message, $start_date, $end_date, $status, $image_path, $id, $store_id]);
+                $stmt->execute([$title, $discount, $discount_type, $min_requirement, $summary, $message, $start_date, $end_date, $status, $image_path, $is_flash_sale, $id, $store_id]);
             } else {
-                // INSERT
-                $sql = "INSERT INTO promotions (id, created_by, store_id, title, discount, discount_type, min_requirement, summary, message, image, start_date, end_date, status, audience) 
-                        VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'store_specific')";
+                // INSERT (เพิ่ม is_flash_sale)
+                $sql = "INSERT INTO promotions (id, created_by, store_id, title, discount, discount_type, min_requirement, summary, message, image, start_date, end_date, status, audience, is_flash_sale) 
+                        VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'store_specific', ?)";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([$user_id, $store_id, $title, $discount, $discount_type, $min_requirement, $summary, $message, $image_path, $start_date, $end_date]);
+                $stmt->execute([$user_id, $store_id, $title, $discount, $discount_type, $min_requirement, $summary, $message, $image_path, $start_date, $end_date, $is_flash_sale]);
             }
 
-            // ใช้ JS แทน header() เพื่อเลี่ยง Warning "Headers already sent"
             echo "<script>window.location.href='" . $_SERVER['PHP_SELF'] . "';</script>";
             exit;
         } catch (PDOException $e) {
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("DELETE FROM promotions WHERE id=? AND store_id=?");
         $stmt->execute([$id, $store_id]);
-        echo "success"; // ตอบกลับให้ Fetch API
+        echo "success";
         exit;
     }
 }
@@ -81,9 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* =========================
     LOAD DATA
 ========================= */
-// ตรวจสอบก่อนดึงข้อมูล
 if ($store_id) {
-    $stmt = $pdo->prepare("SELECT * FROM promotions WHERE store_id = ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM promotions WHERE store_id = ? ORDER BY is_flash_sale DESC, created_at DESC");
     $stmt->execute([$store_id]);
     $promotions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
@@ -105,6 +105,8 @@ if ($store_id) {
             --main-blue: #0061ff;
             --light-blue: #60a5fa;
             --bg-color: #f8fbff;
+            --flash-orange: #ff4757;
+            /* [เพิ่ม] สีสำหรับ Flash Sale */
         }
 
         body {
@@ -127,6 +129,12 @@ if ($store_id) {
             overflow: hidden;
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        /* [เพิ่ม] เอฟเฟกต์สั่นเล็กน้อยสำหรับ Flash Sale */
+        .flash-sale-active {
+            border: 2px solid var(--flash-orange);
         }
 
         .promo-card:hover {
@@ -158,6 +166,37 @@ if ($store_id) {
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
+        /* [เพิ่ม] ป้ายกำกับ Flash Sale บนรูป */
+        .flash-label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--flash-orange);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+            }
+        }
+
         .status-dot {
             width: 10px;
             height: 10px;
@@ -172,6 +211,12 @@ if ($store_id) {
             color: white;
             border-radius: 12px;
             padding: 10px 25px;
+        }
+
+        /* [เพิ่ม] สวิตช์เปิดปิด Flash Sale ใน Modal */
+        .form-check-input:checked {
+            background-color: var(--flash-orange);
+            border-color: var(--flash-orange);
         }
     </style>
 </head>
@@ -199,8 +244,12 @@ if ($store_id) {
 
             <?php foreach ($promotions as $p): ?>
                 <div class="col-lg-4 col-md-6">
-                    <div class="card promo-card h-100 shadow-sm">
+                    <div class="card promo-card h-100 shadow-sm <?= ($p['is_flash_sale'] ?? 0) ? 'flash-sale-active' : '' ?>">
                         <div class="img-container">
+                            <?php if (($p['is_flash_sale'] ?? 0)): ?>
+                                <div class="flash-label"><i class="bi bi-lightning-fill"></i> FLASH SALE</div>
+                            <?php endif; ?>
+
                             <?php if ($p['image']): ?>
                                 <img src="../<?= $p['image'] ?>" alt="Promo">
                             <?php else: ?>
@@ -208,7 +257,7 @@ if ($store_id) {
                                     <i class="bi bi-image text-muted fs-1"></i>
                                 </div>
                             <?php endif; ?>
-                            <div class="discount-badge">
+                            <div class="discount-badge" style="<?= ($p['is_flash_sale'] ?? 0) ? 'color: var(--flash-orange);' : '' ?>">
                                 <?= $p['discount_type'] == 'percentage' ? $p['discount'] . '%' : '฿' . number_format($p['discount']) ?> OFF
                             </div>
                         </div>
@@ -221,7 +270,9 @@ if ($store_id) {
                                     <?= strtoupper($p['status']) ?>
                                 </span>
                             </div>
-                            <h5 class="fw-bold mb-2"><?= htmlspecialchars($p['title']) ?></h5>
+                            <h5 class="fw-bold mb-2">
+                                <?= htmlspecialchars($p['title']) ?>
+                            </h5>
                             <p class="text-muted small mb-3"><?= htmlspecialchars($p['summary']) ?></p>
 
                             <?php if ($p['min_requirement'] > 0): ?>
@@ -230,7 +281,7 @@ if ($store_id) {
                                 </div>
                             <?php endif; ?>
 
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 mt-auto">
                                 <button class="btn btn-outline-primary btn-sm w-100 rounded-3" onclick='openEditModal(<?= json_encode($p) ?>)'>
                                     <i class="bi bi-pencil me-1"></i> แก้ไข
                                 </button>
@@ -259,6 +310,15 @@ if ($store_id) {
                         <input type="hidden" name="existing_image" id="f_existing_image">
 
                         <div class="row g-3">
+                            <div class="col-12 mb-2">
+                                <div class="form-check form-switch p-3 border rounded-3 bg-light">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="is_flash_sale" id="f_is_flash_sale">
+                                    <label class="form-check-label fw-bold text-danger" for="f_is_flash_sale">
+                                        <i class="bi bi-lightning-charge-fill"></i> เปิดใช้งาน Flash Sale (เน้นส่วนลดพิเศษในช่วงเวลาสั้นๆ)
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="col-md-8">
                                 <label class="form-label fw-bold small">ชื่อโปรโมชั่น</label>
                                 <input type="text" name="title" id="f_title" class="form-control rounded-3" required>
@@ -324,8 +384,8 @@ if ($store_id) {
         function openAddModal() {
             document.getElementById('promoForm').reset();
             document.getElementById('f_id').value = '';
+            document.getElementById('f_is_flash_sale').checked = false; // Reset flash sale
             document.getElementById('modalTitle').innerText = '🚀 สร้างโปรโมชั่นใหม่';
-            // ตั้งค่าเวลาปัจจุบัน
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('f_start').value = now.toISOString().slice(0, 16);
@@ -344,6 +404,9 @@ if ($store_id) {
             document.getElementById('f_status').value = data.status;
             document.getElementById('f_existing_image').value = data.image;
 
+            // [เพิ่ม] ตรวจสอบ Flash Sale checkbox
+            document.getElementById('f_is_flash_sale').checked = (data.is_flash_sale == 1);
+
             if (data.start_date) document.getElementById('f_start').value = data.start_date.replace(" ", "T").substring(0, 16);
             if (data.end_date) document.getElementById('f_end').value = data.end_date.replace(" ", "T").substring(0, 16);
 
@@ -357,7 +420,6 @@ if ($store_id) {
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
                 confirmButtonText: 'ลบเลย!',
                 cancelButtonText: 'ยกเลิก'
             }).then((result) => {

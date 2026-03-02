@@ -38,19 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_price_and_accept'
     }
 }
 
-/* ========= 3. POST : บันทึกการชำระเงิน (ยืนยันรายการที่ลูกค้าส่งมา) ========= */
+/* ========= 3. POST : บันทึกการชำระเงิน ========= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_payment'])) {
     $amount_paid = $_POST['amount_fixed'] ?? 0;
     $pay_method  = $_POST['payment_method'] ?? 'cash';
-    $db_method   = ($pay_method === 'qr_promptpay') ? 'promptpay' : 'cash';
 
     $pdo->beginTransaction();
     try {
-        // อัปเดตรายการ Payment ล่าสุดให้เป็น confirmed
         $stmt = $pdo->prepare("UPDATE payments SET status = 'confirmed', confirmed_by = ?, confirmed_at = NOW() WHERE order_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1");
         $stmt->execute([$user_id, $order_id]);
 
-        // อัปเดตสถานะใน orders
         $pdo->prepare("UPDATE orders SET payment_status='paid' WHERE id=?")->execute([$order_id]);
 
         $pdo->commit();
@@ -62,12 +59,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_payment'])) {
     exit;
 }
 
-/* ========= 4. POST : เปลี่ยนสถานะงานทั่วไป ========= */
+/* ========= 4. POST : เปลี่ยนสถานะงานทั่วไป + อัปโหลดรูปหลักฐาน ========= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next_status'])) {
+    $next = $_POST['next_status'];
+    $delivery_image_path = null;
+
+    // ถ้ากำลังจะจบงาน (completed) และมีการส่งรูปมา
+    if ($next === 'completed' && isset($_FILES['delivery_image']) && $_FILES['delivery_image']['error'] === 0) {
+        $ext = pathinfo($_FILES['delivery_image']['name'], PATHINFO_EXTENSION);
+        $filename = "proof_" . time() . "_" . uniqid() . "." . $ext;
+        $target_dir = "../../../uploads/delivery_proofs/";
+
+        // สร้างโฟลเดอร์ถ้ายังไม่มี
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+
+        if (move_uploaded_file($_FILES['delivery_image']['tmp_name'], $target_dir . $filename)) {
+            $delivery_image_path = "uploads/delivery_proofs/" . $filename;
+        }
+    }
+
     $pdo->beginTransaction();
     try {
-        $next = $_POST['next_status'];
-        $pdo->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$next, $order_id]);
+        if ($delivery_image_path) {
+            $pdo->prepare("UPDATE orders SET status=?, delivery_image=? WHERE id=?")
+                ->execute([$next, $delivery_image_path, $order_id]);
+        } else {
+            $pdo->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$next, $order_id]);
+        }
+
         $pdo->prepare("UPDATE pickups SET status=? WHERE order_id=?")->execute([$next, $order_id]);
         $pdo->prepare("INSERT INTO order_status_logs (id,order_id,status,changed_by) VALUES (UUID(),?,?,?)")
             ->execute([$order_id, $next, $user_id]);
@@ -79,7 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['next_status'])) {
     exit;
 }
 
-/* ========= 5. FETCH DATA ========= */
+/* ========= 5. FETCH DATA (เหมือนเดิม) ========= */
+// ... (ส่วนการ Query ข้อมูลคงเดิมตามโค้ดของคุณ) ...
 $stmt = $pdo->prepare("
     SELECT o.*, u.display_name AS customer_name, s.promptpay_number, s.qr_image
     FROM orders o
@@ -97,12 +119,10 @@ $stmt = $pdo->prepare("SELECT * FROM pickups WHERE order_id=? LIMIT 1");
 $stmt->execute([$order_id]);
 $pickup = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// แก้ไขตรงนี้: เอา status='confirmed' ออก เพื่อให้ดึงข้อมูลที่ลูกค้าเลือก (pending) มาโชว์ได้
 $stmt = $pdo->prepare("SELECT * FROM payments WHERE order_id=? ORDER BY created_at DESC LIMIT 1");
 $stmt->execute([$order_id]);
 $payment = $stmt->fetch(PDO::FETCH_ASSOC);
 
-/* ========= 6. HELPERS ========= */
 function label($s)
 {
     return match ($s) {
@@ -138,6 +158,7 @@ function next_status($s)
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* CSS เดิมของคุณ */
         :root {
             --primary-blue: #1e3c72;
             --accent-blue: #2a5298;
@@ -256,6 +277,16 @@ function next_status($s)
             border: 2px solid #bbf7d0;
             color: #166534;
         }
+
+        /* เพิ่มเติมสำหรับการอัปโหลดรูป */
+        .proof-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 15px;
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -306,6 +337,13 @@ function next_status($s)
                                 <i class="bi bi-send-fill me-2"></i> เปิด Google Maps นำทาง
                             </button>
                         <?php endif; ?>
+
+                        <?php if ($order['delivery_image']): ?>
+                            <div class="mt-4">
+                                <label class="small text-muted d-block mb-2">หลักฐานการส่งงาน:</label>
+                                <img src="../../../<?= $order['delivery_image'] ?>" class="img-fluid rounded-4 shadow-sm">
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -314,48 +352,38 @@ function next_status($s)
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="fw-bold mb-4"><i class="bi bi-wallet2 me-2 text-primary"></i>สถานะการชำระเงิน</h5>
-
                         <?php if ($order['payment_status'] === 'paid'): ?>
                             <div class="payment-status-box payment-paid text-center py-4">
                                 <i class="bi bi-check-circle-fill fs-1 mb-2"></i>
                                 <h4 class="fw-bold mb-0">ชำระเงินเรียบร้อย</h4>
                                 <p class="mb-0">ยอดเงิน: ฿<?= number_format($order['total_amount'], 2) ?></p>
                             </div>
-
                         <?php elseif (!$payment): ?>
                             <div class="text-center py-5">
                                 <i class="bi bi-hourglass-split display-4 text-muted"></i>
                                 <p class="text-muted mt-2">ลูกค้ายืนยังไม่ได้เลือกวิธีชำระเงิน</p>
                             </div>
-
                         <?php elseif ($payment['method'] === 'cash'): ?>
                             <div class="payment-status-box border-warning text-center py-4" style="background-color: #fffbef; border: 2px dashed #ffc107;">
                                 <i class="bi bi-truck fs-1 mb-2 text-warning"></i>
                                 <h4 class="fw-bold text-dark">ลูกค้าเลือกเก็บเงินปลายทาง</h4>
-                                <p class="fs-5 text-success fw-bold mb-3">" ไปส่งผ้าโลด! "</p>
                                 <div class="badge bg-warning text-dark px-3 py-2">ยอดต้องเก็บ: ฿<?= number_format($order['total_amount'], 2) ?></div>
-
                                 <form method="post" class="mt-3">
                                     <input type="hidden" name="amount_fixed" value="<?= $order['total_amount'] ?>">
                                     <input type="hidden" name="payment_method" value="cash">
                                     <button type="submit" name="process_payment" class="btn btn-success btn-sm w-100 rounded-pill shadow-sm">ยืนยันว่าได้รับเงินสดแล้ว</button>
                                 </form>
                             </div>
-
                         <?php elseif ($payment['method'] === 'promptpay'): ?>
                             <div class="payment-status-box border-primary text-center py-3" style="border: 2px dashed #0d6efd;">
                                 <h5 class="fw-bold text-primary mb-3">ลูกค้าแจ้งโอนเงินแล้ว</h5>
                                 <?php if (!empty($payment['note'])): ?>
                                     <div class="mb-3">
-                                        <label class="small text-muted d-block mb-2">หลักฐานการโอน:</label>
-                                        <a href="../../../uploads/slips/<?= $payment['note'] ?>" target="_blank">
-                                            <img src="../../../uploads/slips/<?= $payment['note'] ?>"
-                                                class="img-fluid rounded-3 shadow-sm border"
-                                                style="max-height: 200px; object-fit: contain;">
+                                        <a href="../../../<?= $payment['note'] ?>" target="_blank">
+                                            <img src="../../../<?= $payment['note'] ?>" class="img-fluid rounded-3 shadow-sm border" style="max-height: 200px; object-fit: contain;">
                                         </a>
                                     </div>
                                 <?php endif; ?>
-                                <div class="alert alert-info small py-2">ยอดโอน: ฿<?= number_format($payment['amount'], 2) ?></div>
                                 <form method="post">
                                     <input type="hidden" name="amount_fixed" value="<?= $order['total_amount'] ?>">
                                     <input type="hidden" name="payment_method" value="qr_promptpay">
@@ -371,22 +399,38 @@ function next_status($s)
 
     <div class="action-bar">
         <div class="container d-flex justify-content-between align-items-center px-4">
-            <a href="../../index.php?link=Home" class="btn btn-light border px-4 rounded-pill"><i class="bi bi-house"></i></a>
+            <a href="../../index.php" class="btn btn-light border px-4 rounded-pill"><i class="bi bi-house"></i></a>
+
             <?php if ($order['status'] === 'created'): ?>
                 <form method="post" class="d-flex gap-2">
-                    <div class="input-group" style="width: 180px;">
+                    <div class="input-group" style="width: 150px;">
                         <span class="input-group-text bg-white">฿</span>
                         <input type="number" name="total_amount" class="form-control fw-bold" placeholder="ราคา" required>
                     </div>
-                    <button type="submit" name="set_price_and_accept" class="btn btn-warning px-4 fw-bold rounded-pill shadow">รับงาน & ลงราคา</button>
+                    <button type="submit" name="set_price_and_accept" class="btn btn-warning px-4 fw-bold rounded-pill shadow">รับงาน</button>
                 </form>
+
             <?php elseif ($next = next_status($order['status'])): ?>
-                <form method="post">
+                <form method="post" enctype="multipart/form-data" id="statusForm">
                     <input type="hidden" name="next_status" value="<?= $next ?>">
-                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow">
-                        ขั้นตอนถัดไป: <?= label($next) ?> <i class="bi bi-arrow-right ms-2"></i>
-                    </button>
+
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <?php if ($next === 'completed'): ?>
+                            <div class="mb-1">
+                                <input type="file" name="delivery_image" id="delivery_image" class="d-none" accept="image/*" capture="environment" onchange="previewImg(this)">
+                                <button type="button" onclick="document.getElementById('delivery_image').click()" class="btn btn-outline-primary btn-sm rounded-pill">
+                                    <i class="bi bi-camera-fill me-1"></i> ถ่ายรูปหลักฐานส่งงาน
+                                </button>
+                                <img id="preview" class="proof-preview shadow-sm border">
+                            </div>
+                        <?php endif; ?>
+
+                        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow">
+                            ขั้นตอนถัดไป: <?= label($next) ?> <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
                 </form>
+
             <?php else: ?>
                 <span class="text-success fw-bold"><i class="bi bi-check-all"></i> งานนี้เสร็จสมบูรณ์แล้ว</span>
             <?php endif; ?>
@@ -399,6 +443,18 @@ function next_status($s)
                 `https://www.google.com/maps?q=${lat},${lng}` :
                 `https://www.google.com/maps?q=${encodeURIComponent(addr)}`;
             window.open(url, '_blank');
+        }
+
+        function previewImg(input) {
+            const preview = document.getElementById('preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
     </script>
 </body>

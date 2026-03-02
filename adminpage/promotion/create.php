@@ -44,13 +44,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // ปรับ Query เพิ่ม discount_type และ min_requirement
-    $sql = "INSERT INTO promotions (id, created_by, store_id, title, discount, discount_type, min_requirement, summary, message, image, start_date, end_date, status, audience) 
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id, $admin_id, $store_id, $title, $discount, $discount_type, $min_requirement, $summary, $message, $imagePath, $start_date, $end_date, $status, $audience]);
+    // ... โค้ดเดิม ...
+$audience   = $_POST['audience'];
+$store_id   = $_POST['store_id'] ?: null;
+$status     = $_POST['status'];
+
+// เพิ่มส่วนนี้
+$is_flash_sale = isset($_POST['is_flash_sale']) ? 1 : 0;
+$usage_limit   = !empty($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null;
+
+// แก้ไข SQL Insert (เพิ่มฟิลด์ is_flash_sale, usage_limit)
+$sql = "INSERT INTO promotions (id, created_by, store_id, title, discount, discount_type, min_requirement, summary, message, image, start_date, end_date, status, audience, is_flash_sale, usage_limit) 
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$id, $admin_id, $store_id, $title, $discount, $discount_type, $min_requirement, $summary, $message, $imagePath, $start_date, $end_date, $status, $audience, $is_flash_sale, $usage_limit]);
 
     header("Location: ../sidebar/sidebar.php?link=promotion&success=1");
     exit;
+    
 }
 ?>
 <!DOCTYPE html>
@@ -62,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="../../image/3.jpg">
     <title>สร้างโปรโมชั่น - แพลตฟอร์ม</title>
     <style>
         :root {
@@ -192,6 +204,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="number" name="min_requirement" class="form-control" value="0" placeholder="ระบุจำนวนครั้งที่เคยซื้อแพ็กเกจ">
                             <small class="text-muted">* ใส่ 0 หากต้องการให้ใช้ได้ทันทีทุกคน</small>
                         </div>
+                        <div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <label class="form-label">ตั้งค่าพิเศษ</label>
+        <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" name="is_flash_sale" id="flashSaleCheck">
+            <label class="form-check-label" for="flashSaleCheck">เปิดใช้งาน Flash Sale 🔥</label>
+        </div>
+    </div>
+    
+    <div class="col-md-4" id="limitWrapper">
+        <label class="form-label">จำกัดจำนวนสิทธิ์ (ครั้ง)</label>
+        <input type="number" name="usage_limit" class="form-control" placeholder="เช่น 50 (เว้นว่างไว้ถ้าไม่จำกัด)">
+    </div>
+</div>
                         <div class="col-lg-6">
                             <label class="form-label">สรุปสั้นๆ</label>
                             <input type="text" name="summary" class="form-control" placeholder="คำโปรยบนหน้าบัตร...">

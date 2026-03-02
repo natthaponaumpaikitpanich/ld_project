@@ -6,13 +6,13 @@
     <meta charset="UTF-8">
     <title>เข้าสู่ระบบ | Laundry Platform</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../image/3.jpg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* สีฟ้า-ขาว ที่นุ่มนวล ไม่แสบตา */
             --bg-light: #eef5ff;
             --primary-soft: #60a5fa;
             --primary-deep: #2563eb;
@@ -32,7 +32,7 @@
             position: relative;
         }
 
-        /* --- ฟองสบู่และไอคอนผ้าลอยพื้นหลัง --- */
+        /* --- Background Animation --- */
         .laundry-bg-animation {
             position: fixed;
             top: 0;
@@ -84,7 +84,7 @@
             }
         }
 
-        /* --- Main Card --- */
+        /* --- Login Card --- */
         .login-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
@@ -97,48 +97,88 @@
             z-index: 10;
         }
 
-        /* --- Washer Logo Animation --- */
+        /* --- Professional Washer Logo (No Shake on Container) --- */
         .brand-logo {
-            width: 80px;
-            height: 80px;
-            background: white;
-            border-radius: 20px;
+            width: 85px;
+            height: 85px;
+            background: #ffffff;
+            border-radius: 22px;
             margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
             position: relative;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.08);
+            overflow: hidden;
+            /* เก็บส่วนประกอบไว้ในกรอบ */
+        }
+
+        /* ให้ไอคอนข้างในสั่นแทน กรอบข้างนอกจะได้นิ่ง */
+        .washer-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: machineVibrate 0.4s infinite linear;
+        }
+
+        .washer-body {
+            font-size: 55px;
             color: var(--primary-deep);
+            z-index: 1;
         }
 
-        .washer-inner {
-            font-size: 45px;
-            animation: spinWasher 4s infinite linear;
+        .washer-window {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 2px solid var(--primary-soft);
+            z-index: 2;
+            top: 55%;
+            /* ปรับให้ตรงกลางประตูเครื่องซักผ้า */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes spinWasher {
+        .washer-window::after {
+            content: '🫧';
+            font-size: 14px;
+            animation: bubbleSpin 2s infinite linear;
+        }
+
+        @keyframes machineVibrate {
             0% {
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(1px, -1px);
+            }
+
+            50% {
+                transform: translate(-1px, 1px);
+            }
+
+            75% {
+                transform: translate(1px, 1px);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        @keyframes bubbleSpin {
+            from {
                 transform: rotate(0deg);
             }
 
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .brand-logo::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 3px dashed var(--accent-soft);
-            border-radius: 20px;
-            animation: rotateDashed 10s infinite linear;
-        }
-
-        @keyframes rotateDashed {
-            100% {
+            to {
                 transform: rotate(360deg);
             }
         }
@@ -147,6 +187,7 @@
             font-weight: 700;
             color: var(--text-dark);
             text-align: center;
+            margin-bottom: 5px;
         }
 
         .subtitle {
@@ -156,7 +197,7 @@
             margin-bottom: 30px;
         }
 
-        /* --- Input Style --- */
+        /* --- Form Elements --- */
         .form-floating>.form-control {
             border: 2px solid #f1f5f9;
             border-radius: 15px;
@@ -165,11 +206,9 @@
 
         .form-floating>.form-control:focus {
             border-color: var(--primary-soft);
-            background-color: #ffffff;
             box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1);
         }
 
-        /* --- Button --- */
         .btn-submit {
             background: linear-gradient(135deg, var(--primary-soft), var(--primary-deep));
             border: none;
@@ -183,7 +222,6 @@
 
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
             filter: brightness(1.1);
         }
 
@@ -193,17 +231,11 @@
             padding: 10px;
             font-weight: 500;
             color: #475569;
-            transition: 0.2s;
             text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-        }
-
-        .google-btn:hover {
-            background: #f8fafc;
-            border-color: #e2e8f0;
         }
 
         .divider {
@@ -232,6 +264,7 @@
             top: 18px;
             cursor: pointer;
             color: #94a3b8;
+            z-index: 5;
         }
     </style>
 </head>
@@ -250,7 +283,10 @@
 
     <div class="login-card">
         <div class="brand-logo">
-            <i class="bi bi-command washer-inner"></i>
+            <div class="washer-wrapper">
+                <i class="bi bi-door-closed-fill washer-body"></i>
+                <div class="washer-window"></div>
+            </div>
         </div>
 
         <h4>Laundry Service</h4>
