@@ -59,7 +59,7 @@ try {
 
     $pdo->commit();
 
-    header("Location: ../../index.php?link=Profile");
+    header("Location: ../../index.php?link=Home");
     exit;
 } catch (Exception $e) {
     $pdo->rollBack();

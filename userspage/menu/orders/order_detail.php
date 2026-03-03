@@ -436,12 +436,26 @@ function get_status_badge($s)
                             </div>
                         </div>
                         <div class="qr-card text-center mb-4 bg-light p-4 rounded-4">
-                            <?php if (!empty($order['promptpay_qr'])): ?>
-                                <img src="../../../<?= $order['promptpay_qr'] ?>" class="img-fluid rounded-4 mb-3 shadow-sm" style="max-height: 250px;">
-                            <?php else: ?>
-                                <p class="small">ร้านค้ายังไม่ได้ตั้งค่า QR Code</p>
-                            <?php endif; ?>
-                        </div>
+    <?php if (!empty($order['promptpay_qr'])): 
+        // 1. จัดการ Path: ใน DB คุณมี ../ ติดมา เราต้องถอยจากจุดที่ไฟล์นี้อยู่ (userspage/menu/orders) 
+        // ถอย 3 ชั้นจะไปหยุดที่ ld_project (Root)
+        // แล้วเดินหน้าเข้า storepage/menu/ และตามด้วยสิ่งที่อยู่ใน DB
+        
+        $relative_path = ltrim($order['promptpay_qr'], './'); // ลบ ../ หรือ ./ ออกจากค่าใน DB
+        $full_image_path = "../../../storepage/menu/" . $relative_path;
+    ?>
+        <img src="<?= htmlspecialchars($full_image_path) ?>" 
+             class="img-fluid rounded-4 mb-3 shadow-sm" 
+             style="max-height: 250px;"
+             onerror="this.src='https://via.placeholder.com/250?text=QR+Not+Found';">
+        <p class="small text-muted">สแกนเพื่อชำระเงินผ่าน PromptPay</p>
+    <?php else: ?>
+        <div class="py-3">
+            <i class="bi bi-qr-code text-muted fs-1 d-block mb-2"></i>
+            <p class="small text-muted">ร้านค้ายังไม่ได้ตั้งค่า QR Code<br>กรุณาติดต่อเจ้าหน้าที่</p>
+        </div>
+    <?php endif; ?>
+</div>
                         <form method="post" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label class="info-label mb-2">อัปโหลดสลิป</label>

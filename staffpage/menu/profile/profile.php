@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         ");
         $stmt->execute([$display_name, $email, $phone, $user_id]);
     }
-    header("Location:index.php?link=Profile");
+    header("Location:index.php?link=Home");
     exit;
 }
 
